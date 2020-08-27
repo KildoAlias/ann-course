@@ -57,7 +57,7 @@ class perceptron():
         plt.pause(0.1)
         return
 
-    def initWeights(self, dim=2, sigma=0.1):
+    def initWeights(self, dim=2, sigma=1):
         if self.bias:
             dim += 1
         self.W = np.random.RandomState(seed=self.seed).randn(1, dim)*sigma
@@ -73,12 +73,12 @@ class perceptron():
         else:
             deltaW = np.zeros(np.shape(self.W))
             for i in range(np.shape(self.classData)[1]):
-                deltaW += -self.learningRate * \
+                deltaW = -self.learningRate * \
                     (np.dot(
                         self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
-            self.W += deltaW
+                self.W += deltaW
 
-    def train(self, epochs=20, verbose=True):
+    def train(self, epochs=50, verbose=True):
         for i in range(epochs):
             self.deltaRule()
             if verbose:
@@ -104,7 +104,7 @@ def main():
     sigmaA = 0.5
     sigmaB = 0.5
     #######
-    single_layer = perceptron(1, batch=True)
+    single_layer = perceptron(1, batch=False, learningRate=0.001)
     single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
     single_layer.initWeights()
     # single_layer.plotData()
