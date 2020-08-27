@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class perceptron():
 
-    def __init__(self, layers, bias=True, batch=True, learningRate=0.001):
+    def __init__(self, layers, bias=True, batch=True, learningRate=0.001, seed=42):
         self.layers = layers
         self.bias = bias
         self.batch = batch
@@ -16,16 +16,17 @@ class perceptron():
         self.classB = None
         self.W = None
         self.learningRate = learningRate
+        self.seed = seed
         return
 
     def generateClassData(self, nA, nB, mA, mB, sigmaA, sigmaB):
 
         classA_size = mA.size
-        self.classA = np.random.randn(
+        self.classA = np.random.RandomState(seed=self.seed).randn(
             classA_size, nA)*sigmaA + np.transpose(np.array([mA]*nA))
 
         classB_size = mB.size
-        self.classB = np.random.randn(
+        self.classB = np.random.RandomState(seed=self.seed).randn(
             classB_size, nB)*sigmaB + np.transpose(np.array([mB]*nB))
 
         classAB = np.concatenate((self.classA, self.classB), axis=1)
@@ -37,7 +38,7 @@ class perceptron():
 
         T = np.concatenate((np.ones((1, nA)), np.ones((1, nB))*(-1)), axis=1)
 
-        shuffler = np.random.permutation(nA+nB)
+        shuffler = np.random.RandomState(seed=self.seed).permutation(nA+nB)
         self.classData = classData[:, shuffler]
         self.T = T[:, shuffler]
 
@@ -59,7 +60,7 @@ class perceptron():
     def initWeights(self, dim=2, sigma=0.1):
         if self.bias:
             dim += 1
-        self.W = np.random.randn(1, dim)*sigma
+        self.W = np.random.RandomState(seed=self.seed).randn(1, dim)*sigma
 
         return
 
@@ -77,7 +78,7 @@ class perceptron():
                         self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
             self.W += deltaW
 
-    def train(self, epochs=50, verbose=True):
+    def train(self, epochs=20, verbose=True):
         for i in range(epochs):
             self.deltaRule()
             if verbose:
