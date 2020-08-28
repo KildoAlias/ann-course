@@ -17,6 +17,7 @@ class perceptron():
         self.W = None
         self.learningRate = learningRate
         self.seed = seed
+        self.outputs = None
         return
 
     def generateClassData(self, nA, nB, mA, mB, sigmaA, sigmaB):
@@ -45,7 +46,7 @@ class perceptron():
         return
 
     def plotData(self, epoch=None):
-
+        plt.figure(1)
         plt.scatter(self.classA[0, :], self.classA[1, :], c="red")
         plt.scatter(self.classB[0, :], self.classB[1, :], c="blue")
         y1 = -self.W[0, 2]/self.W[0, 1] - self.W[0, 0]/self.W[0, 1]*(-2)
@@ -78,11 +79,12 @@ class perceptron():
                         self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
                 self.W += deltaW
 
-    def train(self, epochs=50, verbose=True):
+    def train(self, epochs=20, verbose=True):
         for i in range(epochs):
             self.deltaRule()
             if verbose:
                 self.plotData(i)
+                self.plotTraining(i)
         return
 
         # Parameters:
@@ -93,6 +95,38 @@ class perceptron():
         # ? step length (learning  rate eta, small value, for example 0.001)
         #! a common mistake when implementing this is to accidentally orient the matrixes wrongly so that columns and rows are interchanged
         #! Have initial  values  assigned to weights (small  random numbers drawn from the normal distribution with zero mean) (Note  that  the  matrix  must  have matching dimensions)
+
+    def plotTraining(self, epoch):
+        loss_val = self.evaluation()
+        plt.figure(2)
+        plt.scatter(epoch, loss_val, c="black")
+        plt.title("Epoch {}".format(epoch))
+        plt.xlabel("Epoch")
+        plt.ylabel("Error")
+        plt.draw()
+        plt.pause(0.1)
+
+    def classify(self, dataset=None):
+        try:
+            if dataset == None:
+                dataset = self.classData
+        except:
+            outputs = np.dot(self.W, dataset)
+            for index, output in enumerate(outputs[0]):
+                if output >= 0:
+                    outputs[0, index] = 1
+                else:
+                    outputs[0, index] = -1
+            self.outputs = outputs
+
+    def evaluation(self, dataset=None):
+        if dataset == None:
+            dataset = self.classData
+        self.classify(dataset)
+        loss_vec = self.outputs == self.T
+        nr_trues = np.count_nonzero(loss_vec)
+        loss_val = 1 - nr_trues/np.shape(self.T)[1]
+        return loss_val
 
 
 def main():
@@ -109,6 +143,8 @@ def main():
     single_layer.initWeights()
     # single_layer.plotData()
     single_layer.train()
+    single_layer.classify()
+    single_layer.evaluation()
 
 
 if __name__ == "__main__":
