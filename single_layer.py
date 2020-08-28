@@ -81,7 +81,7 @@ class perceptron():
                         self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
                 self.W += deltaW
 
-    def train(self, epochs=100, verbose=True):
+    def train(self, epochs=20, verbose=True):
         lossObject = dataPlot()
         for i in range(epochs):
             self.deltaRule()
@@ -155,7 +155,7 @@ def main():
     sigmaA = 0.6
     sigmaB = 0.6
     #######
-    single_layer = perceptron(1, batch=False, learningRate=0.01)
+    single_layer = perceptron(1, batch=False, learningRate=0.001)
     single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
     single_layer.initWeights()
     # single_layer.plotData()
