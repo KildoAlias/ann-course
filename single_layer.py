@@ -45,20 +45,22 @@ class perceptron():
 
         return
 
-    def plotData(self, epoch=None):
-        plt.figure(1)
+    def plotData(self, name="Decision boundary", epoch=None):
+        plt.figure(name)
+        plt.xlabel("Feature 1")
+        plt.ylabel("Feature 2")
         plt.scatter(self.classA[0, :], self.classA[1, :], c="red")
         plt.scatter(self.classB[0, :], self.classB[1, :], c="blue")
         y1 = -self.W[0, 2]/self.W[0, 1] - self.W[0, 0]/self.W[0, 1]*(-2)
         y2 = -self.W[0, 2]/self.W[0, 1] - self.W[0, 0]/self.W[0, 1]*(2)
         plt.plot([-2, 2], [y1, y2])
         plt.axis([-2, 2, -2, 2])
-        plt.title("Epoch: {}, Batch: {}".format(epoch, self.batch))
+        plt.title("Epoch: {}, Batch: {}".format(epoch+1, self.batch))
         plt.draw()
-        plt.pause(0.1)
+        plt.pause(0.001)
         return
 
-    def initWeights(self, dim=2, sigma=1):
+    def initWeights(self, dim=2, sigma=0.5):
         if self.bias:
             dim += 1
         self.W = np.random.RandomState(seed=self.seed).randn(1, dim)*sigma
@@ -79,12 +81,20 @@ class perceptron():
                         self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
                 self.W += deltaW
 
-    def train(self, epochs=20, verbose=True):
+    def train(self, epochs=100, verbose=True):
+        lossObject = dataPlot()
         for i in range(epochs):
             self.deltaRule()
             if verbose:
-                self.plotData(i)
-                self.plotTraining(i)
+                self.plotData(epoch=i)
+                lossObject.epoch_vec.append(i)
+                lossObject.loss_vals.append(self.evaluation())
+        plt.savefig("Decision boundary")
+        self.plotData(
+            name="Decision boundary - epochs ({})".format(i+1), epoch=i)
+        plt.savefig("Decision boundary - epochs ({})".format(i+1))
+        lossObject.plot()
+
         return
 
         # Parameters:
@@ -95,16 +105,6 @@ class perceptron():
         # ? step length (learning  rate eta, small value, for example 0.001)
         #! a common mistake when implementing this is to accidentally orient the matrixes wrongly so that columns and rows are interchanged
         #! Have initial  values  assigned to weights (small  random numbers drawn from the normal distribution with zero mean) (Note  that  the  matrix  must  have matching dimensions)
-
-    def plotTraining(self, epoch):
-        loss_val = self.evaluation()
-        plt.figure(2)
-        plt.scatter(epoch, loss_val, c="black")
-        plt.title("Epoch {}".format(epoch))
-        plt.xlabel("Epoch")
-        plt.ylabel("Error")
-        plt.draw()
-        plt.pause(0.1)
 
     def classify(self, dataset=None):
         try:
@@ -129,16 +129,33 @@ class perceptron():
         return loss_val
 
 
+class dataPlot():
+    def __init__(self):
+        self.epoch_vec = []
+        self.loss_vals = []
+
+    def plot(self):
+        plt.figure("Loss function")
+        plt.title("Loss function")
+        plt.plot(self.epoch_vec, [
+                 100*i for i in self.loss_vals], "-o", color="black")
+        plt.xlabel("Epoch")
+        plt.ylabel("Missclassified [%]")
+        plt.draw()
+        plt.pause(1)
+        plt.savefig("Loss function")
+
+
 def main():
     # Parameters for generate_data
     mA = np.array([1, 0.5])
     mB = np.array([-1, 0])
     nA = 200
     nB = 200
-    sigmaA = 0.5
-    sigmaB = 0.5
+    sigmaA = 0.6
+    sigmaB = 0.6
     #######
-    single_layer = perceptron(1, batch=False, learningRate=0.001)
+    single_layer = perceptron(1, batch=False, learningRate=0.01)
     single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
     single_layer.initWeights()
     # single_layer.plotData()
