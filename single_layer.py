@@ -60,7 +60,7 @@ class perceptron():
         plt.pause(0.001)
         return
 
-    def initWeights(self, dim=2, sigma=0.5):
+    def initWeights(self, dim=2, sigma=1):
         if self.bias:
             dim += 1
         self.W = np.random.RandomState(seed=self.seed).randn(1, dim)*sigma
@@ -81,10 +81,43 @@ class perceptron():
                         self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
                 self.W += deltaW
 
-    def train(self, epochs=20, verbose=True):
+    def activationFunction(self, prediction):
+        if self.batch:
+            for index, p in enumerate(prediction[0]):
+                if p > 0:
+                    prediction[0, index] = 1
+                else:
+                    prediction[0, index] = -1
+        else:
+            if prediction > 0:
+                prediction = 1
+            else:
+                prediction = -1
+        return prediction
+
+    def perceptronLearning(self):
+        if self.batch:
+            deltaW = -self.learningRate * \
+                np.dot((self.activationFunction(np.dot(self.W, self.classData)) - self.T),
+                       np.transpose(self.classData))
+            self.W += deltaW
+        else:
+            deltaW = np.zeros(np.shape(self.W))
+            for i in range(np.shape(self.classData)[1]):
+                deltaW = -self.learningRate * \
+                    (self.activationFunction(np.dot(
+                        self.W, self.classData[:, i])) - self.T[:, i]) * np.transpose(self.classData[:, i])
+                self.W += deltaW
+
+    def train(self, epochs=50, verbose=True, method=1):
+        # Method 1 = Perceptron Learning
+        # Method 2 = Delta Rule
         lossObject = dataPlot()
         for i in range(epochs):
-            self.deltaRule()
+            if method == 1:
+                self.perceptronLearning()
+            elif method == 2:
+                self.deltaRule()
             if verbose:
                 self.plotData(epoch=i)
                 lossObject.epoch_vec.append(i)
@@ -150,18 +183,19 @@ def main():
     # Parameters for generate_data
     mA = np.array([1, 0.5])
     mB = np.array([-1, 0])
-    nA = 200
-    nB = 200
-    sigmaA = 0.6
-    sigmaB = 0.6
+    nA = 100
+    nB = 100
+    sigmaA = 0.4
+    sigmaB = 0.4
     #######
-    single_layer = perceptron(1, batch=False, learningRate=0.001)
+    single_layer = perceptron(1, batch=True, learningRate=0.007, seed=42)
     single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
     single_layer.initWeights()
     # single_layer.plotData()
-    single_layer.train()
+    single_layer.train(method=2)
     single_layer.classify()
     single_layer.evaluation()
+    print(single_layer.W)
 
 
 if __name__ == "__main__":
