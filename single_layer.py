@@ -112,7 +112,8 @@ class perceptron():
     def train(self, epochs=50, verbose=True, method=1):
         # Method 1 = Perceptron Learning
         # Method 2 = Delta Rule
-        lossObject = dataPlot()
+        epoch_vec = []
+        loss_vals = []
         for i in range(epochs):
             if method == 1:
                 self.perceptronLearning()
@@ -120,24 +121,14 @@ class perceptron():
                 self.deltaRule()
             if verbose:
                 self.plotData(epoch=i)
-                lossObject.epoch_vec.append(i)
-                lossObject.loss_vals.append(self.evaluation())
-        plt.savefig("Decision boundary")
-        self.plotData(
-            name="Decision boundary - epochs ({})".format(i+1), epoch=i)
-        plt.savefig("Decision boundary - epochs ({})".format(i+1))
-        lossObject.plot()
-
-        return
-
-        # Parameters:
-        # ? epochs (20 suitable)
-        # ? input size
-        # ? output size
-        # ? number of training patterns
-        # ? step length (learning  rate eta, small value, for example 0.001)
-        #! a common mistake when implementing this is to accidentally orient the matrixes wrongly so that columns and rows are interchanged
-        #! Have initial  values  assigned to weights (small  random numbers drawn from the normal distribution with zero mean) (Note  that  the  matrix  must  have matching dimensions)
+            epoch_vec.append(i)
+            loss_vals.append(self.evaluation())
+        if verbose:
+            plt.savefig("images/Decision boundary")
+            self.plotData(
+                name="Decision boundary - epochs ({})".format(i+1), epoch=i)
+            plt.savefig("images/Decision boundary - epochs ({})".format(i+1))
+        return epoch_vec, loss_vals
 
     def classify(self, dataset=None):
         try:
@@ -162,23 +153,6 @@ class perceptron():
         return loss_val
 
 
-class dataPlot():
-    def __init__(self):
-        self.epoch_vec = []
-        self.loss_vals = []
-
-    def plot(self):
-        plt.figure("Loss function")
-        plt.title("Loss function")
-        plt.plot(self.epoch_vec, [
-                 100*i for i in self.loss_vals], "-o", color="black")
-        plt.xlabel("Epoch")
-        plt.ylabel("Missclassified [%]")
-        plt.draw()
-        plt.pause(1)
-        plt.savefig("Loss function")
-
-
 def main():
     # Parameters for generate_data
     mA = np.array([1, 0.5])
@@ -187,15 +161,48 @@ def main():
     nB = 100
     sigmaA = 0.4
     sigmaB = 0.4
-    #######
-    single_layer = perceptron(1, batch=True, learningRate=0.007, seed=42)
+
+    single_layer = perceptron(1, batch=False, learningRate=0.001, seed=42)
     single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
     single_layer.initWeights()
-    # single_layer.plotData()
-    single_layer.train(method=2)
-    single_layer.classify()
-    single_layer.evaluation()
-    print(single_layer.W)
+    epoch_vec, loss_vals = single_layer.train(
+        method=2, verbose=True, epochs=10)
+
+    # SEQ
+    ETA = [0.001, 0.002, 0.004]
+    legends = []
+    for eta in ETA:
+        plt.figure("Learning_Curve_seq")
+        single_layer = perceptron(1, batch=False, learningRate=eta, seed=42)
+        single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
+        single_layer.initWeights()
+        epoch_vec, loss_vals = single_layer.train(
+            method=2, verbose=False, epochs=10)
+        plt.plot(epoch_vec, [100*i for i in loss_vals], "-.")
+        legends.append("Learning rate = " + str(eta))
+    plt.title("Learning Curve, Sequential")
+    plt.xlabel("Epoch")
+    plt.ylabel("Missclassified [%]")
+    plt.legend(legends)
+    plt.savefig("images/Learning_Curve_seq")
+
+    # BATCH
+    ETA = [0.001, 0.002, 0.004]
+    legends = []
+    for eta in ETA:
+        plt.figure("Learning_Curve_batch")
+        single_layer = perceptron(1, batch=True, learningRate=eta, seed=42)
+        single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
+        single_layer.initWeights()
+        epoch_vec, loss_vals = single_layer.train(
+            method=2, verbose=False, epochs=10)
+        plt.plot(epoch_vec, [100*i for i in loss_vals], "-.")
+        legends.append("Learning rate = " + str(eta))
+    plt.title("Learning Curve, Batch")
+    plt.xlabel("Epoch")
+    plt.ylabel("Missclassified [%]")
+    plt.legend(legends)
+    plt.savefig("images/Learning_Curve_batch")
 
 
 if __name__ == "__main__":

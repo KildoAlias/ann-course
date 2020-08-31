@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-
-
+from generateData import generateClassData
+from progressBar import progressBar
 class neuralNetwork():
     def __init__(self, layers, bias=True, seed=42):
         """
@@ -30,81 +30,150 @@ class neuralNetwork():
         bias = "Bias: {} \n".format(self.bias)
         return structure + layers + bias
 
-    def initWeights(self, dim=2, sigma=1):
+    def initWeights(self, dim=2, sigma=0.1):
         """
         dim: The dimension of the input layer\n
-        sigma: Default value 1.
+        sigma: Default value 0.1.
         """
         # Init weights for hidden layers
         for layer in self.layers:
             if self.bias:
                 dim += 1
             self.weights.append(np.random.RandomState(
-                seed=self.seed).randn(layer, dim)*sigma)
+                seed=self.seed*10).randn(layer, dim)*sigma)
             dim = layer
 
     def transferFunction(self, x):
         return 2 / (1 + np.exp(-x)) - 1
 
-    def activationFunction(self):
-        return
+    def activationFunction(self, data):
+        data[data > 0] = 1
+        data[data < 0] = -1
+        return data
 
-    def classify(self):
-        return
+    def forwardpass(self, data, layer):
+        """
+        Description:\n
+            forwardpass function(recursive function), first part of the classification\n
+        Input:\n
+            data: the intput data for current layer
+            layer: current layer (number)
+        output:\n
+            out: output from the neural network
+        """
+        if layer == self.numberOfLayers:
+            return data
+        else:
+            hin = self.weights[layer] @ np.concatenate(
+                (self.transferFunction(data), np.ones((1, np.shape(data)[1]))), axis=0)
+            hout = self.transferFunction(hin)
+            return self.forwardpass(data=hout, layer=layer+1)
 
-    def eval(self):
-        return
+    def classify(self, data):
+        data = self.forwardpass(data=data, layer=0)
+        return self.activationFunction(data)
 
-    def train(self, data, epochs):
-        def forwardpass(patterns, layer):
+    def eval(self, data, targets, verbose=False):
+        classified_data = self.classify(data)
+        accuracy = np.count_nonzero(
+            classified_data == targets)/np.shape(targets)[1]*100
+        print("Accuracy: ", accuracy)
+        if verbose:
+            plt.scatter(data[0, np.where(classified_data==targets)], data[1, np.where(classified_data==targets)], c="green")
+            plt.scatter(data[0, np.where(classified_data!=targets)], data[1, np.where(classified_data!=targets)], c="red")
+            plt.show()
+
+    def loss_val(self, data, target):
+        loss = 1 / (2*np.shape(target)[1]) * np.sum( np.power(self.forwardpass(data=data, layer=0) - target, 2))
+        return loss
+
+    def train(self, data, targets, epochs, eta=0.001, alpha=0.9):
+        def forwardpass(data, layer, out_vec=[]):
+            """
+            Description:\n
+                Forwardpass function (recursive function)\n
+            Input:\n
+                data: the intput data for current layer
+                layer: current layer (number)
+                out_vec: the output vector with corresponding output
+            """
             if layer == self.numberOfLayers:
-                return patterns
+                out_vec.append(data)
+                return out_vec[1:]
             else:
+                out_vec.append(np.concatenate(
+                    (data, np.ones((1, np.shape(data)[1])))))
                 hin = self.weights[layer] @ np.concatenate(
-                    (self.transferFunction(patterns), np.ones((1, np.shape(patterns)[1]))), axis=0)
+                    (self.transferFunction(data), np.ones((1, np.shape(data)[1]))), axis=0)
                 hout = self.transferFunction(hin)
-                return forwardpass(hout, layer+1)
+                return forwardpass(data=hout, layer=layer+1, out_vec=out_vec)
 
-        def backprop():
-            return
+        def backprop(out_vec, targets):
+            """
+            Description:\n
+            Backprop function\n
+            Input:\n
+                out_vec: the output vector for each layer\n
+                targets: target label\n
 
+            Output:\n
+                delta_h: the delta for the hidden layer\n
+                delta_o: the delta for the output layer\n
+            """
+            delta_o = (out_vec[-1] - targets) * \
+                ((1 + out_vec[-1]) * (1 - out_vec[-1])) * 0.5
+            delta_h = (np.transpose(
+                self.weights[-1]) @ delta_o) * ((1 + out_vec[0]) * (1 - out_vec[0])) * 0.5
+            delta_h = delta_h[0:self.layers[0], :]
+            return delta_h, delta_o
+
+        # Inital delta weights.
+        dw = np.ones(np.shape(self.weights[0]))
+        dv = np.ones(np.shape(self.weights[1]))
+        
+        progBar = progressBar(epochs,10)
+        loss_vec = []
+        epoch_vec = []
+        # training for all the epochs.
         for epoch in range(epochs):
-            out = forwardpass(data, 0)
-            print(out)
+            progBar.Progress(epoch)
+            # Forwarding
+            out_vec = forwardpass(data=data, layer=0)
+
+            # Back propogating
+            delta_hidden, delta_output = backprop(out_vec, targets)
+
+            # Weights update
+            pat = np.concatenate((data, np.ones((1, np.shape(data)[1]))))
+            dw = (dw * alpha) - (delta_hidden @
+                                 np.transpose(pat)) * (1 - alpha)
+            dv = (dv * alpha) - (delta_output @
+                                 np.transpose(out_vec[0])) * (1 - alpha)
+
+            self.weights[0] = self.weights[0] + dw*eta
+            self.weights[1] = self.weights[1] + dv*eta
+
+            loss_vec.append(self.loss_val(data, target=targets))
+            epoch_vec.append(epoch)
+        return epoch_vec, loss_vec
 
 
-def generateClassData(nA, nB, mA, mB, sigmaA, sigmaB, bias, seed=42):
 
-    classA_size = mA.size
-    classA = np.random.RandomState(seed=seed).randn(
-        classA_size, nA)*sigmaA + np.transpose(np.array([mA]*nA))
+def main():
+    n = 100
+    bias = True
+    data, targets = generateClassData(n, proc_A=1, proc_B=1, verbose=False, seed=100,linear=False)
 
-    classB_size = mB.size
-    classB = np.random.RandomState(seed=seed).randn(
-        classB_size, nB)*sigmaB + np.transpose(np.array([mB]*nB))
+    NN = neuralNetwork(bias=bias, layers=[100, 1])
+    NN.initWeights()
+    print(NN)
+    epoch_vec, loss_vec = NN.train(data, targets=targets, epochs=10000, eta=0.001)
 
-    classData = np.concatenate((classA, classB), axis=1)
-
-    T = np.concatenate((np.ones((1, nA)), np.ones((1, nB))*(-1)), axis=1)
-
-    shuffler = np.random.RandomState(seed=seed).permutation(nA+nB)
-    classData = classData[:, shuffler]
-    T = T[:, shuffler]
-
-    return classData, T
+    plt.plot(epoch_vec, loss_vec)
+    plt.show()
+    NN.initWeights()
+    NN.eval(data, targets, verbose=True)
 
 
-mA = np.array([1, 0.5])
-mB = np.array([-1, 0])
-nA = 100
-nB = 100
-sigmaA = 0.4
-sigmaB = 0.4
-bias = True
-
-data, target = generateClassData(nA, nB, mA, mB, sigmaA, sigmaB, bias=bias)
-NN = neuralNetwork(bias=bias, layers=[2, 1])
-NN.initWeights()
-print(NN)
-NN.train(data, 10)
-NN.initWeights()
+if __name__ == "__main__":
+    main()
