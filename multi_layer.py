@@ -4,7 +4,6 @@ import math
 from generateData import generateClassData
 from progressBar import progressBar
 
-np.random.seed(10)
 class neuralNetwork():
     def __init__(self, layers, bias=True):
         """
@@ -38,9 +37,7 @@ class neuralNetwork():
         sigma: Default value 0.1.
         """
         # Init weights for hidden layers
-
         for layer in self.layers:
-            np.random.seed(10)
             if self.bias:
                 dim += 1
             self.weights.append(np.random.randn(layer, dim)*sigma)
@@ -81,6 +78,7 @@ class neuralNetwork():
         accuracy = np.count_nonzero(classified_data == targets)/np.shape(targets)[1]*100
         print("Accuracy: ", accuracy)
         if verbose:
+            plt.figure("Decision Boundary")
             plt.scatter(data[0, np.where(classified_data==targets)], data[1, np.where(classified_data==targets)], c="green")
             plt.scatter(data[0, np.where(classified_data!=targets)], data[1, np.where(classified_data!=targets)], c="red")
             
@@ -132,20 +130,18 @@ class neuralNetwork():
         dw = np.zeros(np.shape(self.weights[0]))
         dv = np.zeros(np.shape(self.weights[1]))
         
-        progBar = progressBar(epochs,10)
+        progBar = progressBar(epochs)
         loss_vec_train = []
         loss_vec_valid = []
         epoch_vec = []
         
-        # print("Weights hidden: ", self.weights[0])
-        # print("Weights output: ", self.weights[1])
+
         # training for all the epochs.
         for epoch in range(epochs):
             progBar.Progress(epoch)
             # Forwarding
             out_vec = forwardpass(x_train=x_train)
-            # print("hout: ", out_vec[0])
-            # print("out: ", out_vec[1])
+
             # Back propogating
             delta_hidden, delta_output = backprop(out_vec, y_train)
 
@@ -159,56 +155,63 @@ class neuralNetwork():
 
             # Loss function 
             loss_vec_train.append(self.loss_val(x_train, target=y_train))
-            # loss_vec_valid.append(self.loss_val(x_valid, target=y_valid))
+            loss_vec_valid.append(self.loss_val(x_valid, target=y_valid))
             epoch_vec.append(epoch)
-        return epoch_vec, loss_vec_train
+        return epoch_vec, loss_vec_train, loss_vec_valid
 
 
-
-def main():
-    n = 100
-    bias = True
-    x_train, y_train, x_valid, y_valid, x_train_A, x_train_B = generateClassData(n, proc_A=1, proc_B=1, verbose=True, linear=False)
-
-    NN = neuralNetwork(bias=bias, layers=[200, 1])
-    NN.initWeights()
-    print(NN)
-
-    epoch_vec, loss_vec_train = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=1000, eta=0.001, alpha=0)
-
-    plt.plot(epoch_vec, loss_vec_train)
-
-    plt.legend(("Training loss", "Validation loss"))
-    plt.show()
-    
-    NN.eval(x_train, y_train, verbose=True)
-
-    disc = 100
-    x_val = np.linspace(-1.5, 1.5, disc).reshape(1,disc)
-    y_val = np.linspace(-1.5, 1.5, disc).reshape(1,disc)
+def decision_boundary_multilayer(NeuralNet, x_train, y_train, x_train_A, x_train_B, disc=100, axis=[-1.5, 1.5]):
+    x_val = np.linspace(axis[0], axis[1], disc).reshape(1,disc)
+    y_val = np.linspace(axis[0], axis[1], disc).reshape(1,disc)
     
     x_vec = x_val
     for i in range(disc-1):
         x_vec = np.concatenate((x_vec,x_val), axis=1)
-    grid_2D = np.concatenate((x_vec, x_vec), axis=0)
+    XY = np.concatenate((x_vec, x_vec), axis=0)
 
     index = 0
     for y in y_val[0]:
         for i in range(disc):
-            grid_2D[1,index] = y
+            XY[1,index] = y
             index += 1
 
-    grid_2D_val= NN.forwardpass(data=grid_2D, layer=0)
-    z = grid_2D_val.reshape(disc,disc)
-    x = grid_2D[0].reshape(disc,disc)
-    y = grid_2D[1].reshape(disc,disc)
 
+    Z = NeuralNet.forwardpass(data=XY, layer=0)
+    z = Z.reshape(disc,disc)
+    x = XY[0].reshape(disc,disc)
+    y = XY[1].reshape(disc,disc)
 
+    plt.figure("Decision Boundary")
     plt.contourf(x, y, z, cmap = 'jet')
     plt.colorbar()
-    NN.eval(x_train,y_train,verbose=True)
+    NeuralNet.eval(x_train,y_train,verbose=True)
     plt.scatter(x_train_A[0,:], x_train_A[1,:], marker="+", c="black")
     plt.scatter(x_train_B[0,:], x_train_B[1,:], marker="_", c="black")
+
+def main():
+    n = 100
+    bias = True
+    x_train, y_train, x_valid, y_valid, x_train_A, x_train_B = generateClassData(n, proc_A=0.8, proc_B=1, verbose=True, linear=False)
+
+    NN = neuralNetwork(bias=bias, layers=[200, 1])
+    NN.initWeights()
+    epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=1000, eta=0.001, alpha=0)
+
+
+    plt.figure("Learning Curve")
+    plt.plot(epoch_vec, loss_vec_train)
+    plt.plot(epoch_vec, loss_vec_val)
+    plt.legend(("Training loss", "Validation loss"))
+    
+    NN.eval(x_train, y_train, verbose=True)
+
+    decision_boundary_multilayer(NeuralNet=NN,
+                                 x_train=x_train, 
+                                 y_train=y_train, 
+                                 x_train_A=x_train_A, 
+                                 x_train_B=x_train_B, 
+                                 disc=100, 
+                                 axis=[-1.5, 1.5])
     plt.show()
 if __name__ == "__main__":
     main()

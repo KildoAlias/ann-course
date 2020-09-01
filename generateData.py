@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-np.random.seed(10)
+
 def generateClassData(n, proc_A, proc_B, linear=False, verbose=True):
     if linear:
         mA = np.array([1, 0.5])
@@ -85,14 +85,10 @@ def generateClassData(n, proc_A, proc_B, linear=False, verbose=True):
         y_train = y_train[:, shuffler]
         
         if verbose:
-            # print(np.shape(x_valid_A))
-            # plt.scatter(x_train_A[0,:], x_train_A[1,:], c=y_train_A[0], s=100, cmap="YlOrBr", edgecolor="k")
-            # plt.scatter(x_train_B[0,:], x_train_B[1,:], c=y_train_B[0], s=100, cmap="YlOrBr", edgecolor="k")
-            # plt.colorbar(label="values")
-            plt.figure(1)
+            plt.figure("Genererated Data")
             plt.scatter(x_train_A[0,:], x_train_A[1,:], c="red")
             plt.scatter(x_train_B[0,:], x_train_B[1,:], c="blue")
-            plt.scatter(x_valid_A[0,:], x_valid_A[1,:],c="red")
-            plt.scatter(x_valid_B[0,:], x_valid_B[1,:],c="blue")
-            plt.show()
+            plt.scatter(x_valid_A[0,:], x_valid_A[1,:], c="red")
+            plt.scatter(x_valid_B[0,:], x_valid_B[1,:], c="blue")
+
         return x_train, y_train, x_valid, y_valid, x_train_A, x_train_B
