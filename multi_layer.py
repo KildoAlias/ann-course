@@ -52,25 +52,23 @@ class neuralNetwork():
         data[data <= 0] = -1
         return data
 
-    def forwardpass(self, data, layer):
-        """
-        Description:\n
-            forwardpass function(recursive function), first part of the classification\n
-        Input:\n
-            data: the intput data for current layer
-            layer: current layer (number)
-        output:\n
-            out: output from the neural network
-        """
-        if layer == self.numberOfLayers:
-            return data
+    def forwardpass(self, data):
+        if self.bias:
+            patterns = np.concatenate((data, np.ones((1, np.shape(data)[1]))), axis=0)
         else:
-            hin = self.weights[layer] @ np.concatenate((data, np.ones((1, np.shape(data)[1]))), axis=0)
-            hout = self.transferFunction(hin)
-            return self.forwardpass(data=hout, layer=layer+1)
+            patterns = data
+        hin = self.weights[0] @ patterns
+
+        hout = self.transferFunction(hin)
+        if self.bias:
+            hout =  np.concatenate((hout, np.ones((1, np.shape(data)[1]))), axis=0)
+
+        oin = self.weights[1] @ hout
+        out = self.transferFunction(oin)
+        return out
 
     def classify(self, data):
-        data = self.forwardpass(data=data, layer=0)
+        data = self.forwardpass(data=data)
         return self.activationFunction(data)
 
     def eval(self, data, targets, verbose=False):
@@ -84,7 +82,7 @@ class neuralNetwork():
             
 
     def loss_val(self, data, target):
-        loss = 1 / (2*np.shape(target)[1]) * np.sum( np.power(self.forwardpass(data=data, layer=0) - target, 2))
+        loss = 1 / (2*np.shape(target)[1]) * np.sum( np.power(self.forwardpass(data=data) - target, 2))
         return loss
 
     def train(self, x_train, y_train, x_valid, y_valid, epochs, eta=0.001, alpha=0.9):
@@ -97,11 +95,15 @@ class neuralNetwork():
                 layer: current layer (number)
                 out_vec: the output vector with corresponding output
             """
-            patterns = np.concatenate((x_train, np.ones((1, np.shape(x_train)[1]))), axis=0)
+            if self.bias:
+                patterns = np.concatenate((x_train, np.ones((1, np.shape(x_train)[1]))), axis=0)
+            else:
+                patterns = x_train
             hin = self.weights[0] @ patterns
 
             hout = self.transferFunction(hin)
-            hout =  np.concatenate((hout, np.ones((1, np.shape(x_train)[1]))), axis=0)
+            if self.bias:
+                hout =  np.concatenate((hout, np.ones((1, np.shape(x_train)[1]))), axis=0)
 
             oin = self.weights[1] @ hout
             out = self.transferFunction(oin)
@@ -146,7 +148,10 @@ class neuralNetwork():
             delta_hidden, delta_output = backprop(out_vec, y_train)
 
             # Weights update
-            pat = np.concatenate((x_train, np.ones((1, np.shape(x_train)[1]))))
+            if self.bias:
+                pat = np.concatenate((x_train, np.ones((1, np.shape(x_train)[1]))))
+            else:
+                pat = x_train
             dw = (dw * alpha) - (delta_hidden @ np.transpose(pat)) * (1 - alpha)
             dv = (dv * alpha) - (delta_output @ np.transpose(out_vec[0])) * (1 - alpha)
 
@@ -176,7 +181,7 @@ def decision_boundary_multilayer(NeuralNet, x_train, y_train, x_train_A, x_train
             index += 1
 
 
-    Z = NeuralNet.forwardpass(data=XY, layer=0)
+    Z = NeuralNet.forwardpass(XY)
     z = Z.reshape(disc,disc)
     x = XY[0].reshape(disc,disc)
     y = XY[1].reshape(disc,disc)
@@ -211,7 +216,7 @@ def main():
                                  x_train_A=x_train_A, 
                                  x_train_B=x_train_B, 
                                  disc=100, 
-                                 axis=[-1.5, 1.5])
+                                 axis=[-5, 5])
     plt.show()
 if __name__ == "__main__":
     main()
