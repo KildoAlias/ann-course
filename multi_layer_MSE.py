@@ -238,7 +238,7 @@ def main():
         
         # NN.eval(x_train, y_train, verbose=False)
     plt.legend(legends)
-    plt.savefig("images/MSE_Layers)
+    plt.savefig("images/MSE_Layers")
     plt.show()
 
 if __name__ == "__main__":
