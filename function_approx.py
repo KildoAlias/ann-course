@@ -1,8 +1,11 @@
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import math
 from generateData import generateClassData
 from progressBar import progressBar
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 
 class neuralNetwork():
     def __init__(self, layers, bias=True):
@@ -85,7 +88,7 @@ class neuralNetwork():
         loss = 1 / (2*np.shape(target)[1]) * np.sum( np.power(self.forwardpass(data=data) - target, 2))
         return loss
 
-    def train(self, x_train, y_train, x_valid, y_valid, epochs, eta=0.001, alpha=0.9):
+    def train(self, x_train, y_train, epochs, eta=0.001, alpha=0.9):
         def forwardpass(x_train):
             """
             Description:\n
@@ -160,12 +163,11 @@ class neuralNetwork():
 
             # Loss function 
             loss_vec_train.append(self.loss_val(x_train, target=y_train))
-            loss_vec_valid.append(self.loss_val(x_valid, target=y_valid))
             epoch_vec.append(epoch)
-        return epoch_vec, loss_vec_train, loss_vec_valid
+        return epoch_vec, loss_vec_train
 
 
-def decision_boundary_multilayer(NeuralNet, x_train, y_train, x_train_A, x_train_B, disc=100, axis=[-1.5, 1.5]):
+def decision_boundary_multilayer(NeuralNet, x_train, y_train, disc=100, axis=[-1.5, 1.5]):
     x_val = np.linspace(axis[0], axis[1], disc).reshape(1,disc)
     y_val = np.linspace(axis[0], axis[1], disc).reshape(1,disc)
     
@@ -189,28 +191,66 @@ def decision_boundary_multilayer(NeuralNet, x_train, y_train, x_train_A, x_train
     plt.figure("Decision Boundary")
     plt.contourf(x, y, z, cmap = 'jet')
     plt.colorbar()
-    NeuralNet.eval(x_train,y_train,verbose=True)
-    plt.scatter(x_train_A[0,:], x_train_A[1,:], marker="+", c="black")
-    plt.scatter(x_train_B[0,:], x_train_B[1,:], marker="_", c="black")
+
+def bellcurve(NeuralNet, x_train, axis=[-5,5], delta=0.5):
+    X = np.arange(-5, 5+delta, delta)
+    Y = np.arange(-5, 5+delta, delta)
+    X, Y = np.meshgrid(X, Y)
+    Z = NeuralNet.forwardpass(x_train)
+
+    Z = Z.reshape(int((axis[1]-axis[0])/delta + 1), int((axis[1]-axis[0])/delta + 1))
+
+    fig = plt.figure("3D Bellcurve function")
+    ax = fig.gca(projection='3d')
+    surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
+                       linewidth=0, antialiased=False)
+
+    # Customize the z axis.
+    ax.set_zlim(-1.01, 1.01)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+
+    # Add a color bar which maps values to colors.
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+
+    plt.show()
+
+
+
+
+def generateBelcurveData(axis=[-5,5], delta=0.5):
+    x_val = np.arange(-5, 5+delta, delta).reshape(1,-1)
+    y_val = np.arange(-5, 5+delta, delta).reshape(1,-1)
+
+    x_vec = x_val
+    for i in range(x_val.shape[1]-1):
+        x_vec = np.concatenate((x_vec,x_val), axis=1)
+    x_train = np.concatenate((x_vec, x_vec), axis=0)
+
+    index = 0
+    for y in y_val[0]:
+        for i in range(y_val.shape[1]):
+            x_train[1,index] = y
+            index += 1
+
+    y_train = np.transpose(np.exp(-x_val*x_val*0.1)) @ np.exp(-y_val*y_val*0.1) - 0.5
+    y_train = y_train.reshape(1,-1)
+    return x_train, y_train
 
 def main():
     bias = True
-    axis = [-5,5]
-    disc=int((axis[1]-axis[0])/0.5+1)
-    x_train = np.concatenate( (np.linspace(axis[0], axis[1], disc).reshape(1,disc), np.linspace(axis[0], axis[1], disc).reshape(1,disc)), axis=0)
-    y_train = np.linspace(axis[0], axis[1], disc).reshape(1,disc)
-    x_valid=x_train
-    y_valid=y_train
-    print(x_train)
+    delta = 0.5
+    x_train, y_train = generateBelcurveData(delta=delta)
+    x_valid = x_train
+    y_valid = y_train
 
-    NN = neuralNetwork(bias=bias, layers=[200, 1])
+    NN = neuralNetwork(bias=bias, layers=[100, 1])
     NN.initWeights()
-    epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=1000, eta=0.1, alpha=0)
+    epoch_vec, loss_vec_train = NN.train(x_train=x_train, y_train=y_train, epochs=100, eta=0.01, alpha=0.9)
 
 
     plt.figure("Learning Curve")
     plt.plot(epoch_vec, loss_vec_train)
-    plt.plot(epoch_vec, loss_vec_val)
     plt.legend(("Training loss", "Validation loss"))
     
     NN.eval(x_valid, y_valid, verbose=True)
@@ -218,10 +258,10 @@ def main():
     decision_boundary_multilayer(NeuralNet=NN,
                                  x_train=x_train, 
                                  y_train=y_train, 
-                                 x_train_A=x_train_A, 
-                                 x_train_B=x_train_B, 
                                  disc=100, 
-                                 axis=[-1.5, 1.5])
+                                 axis=[-6, 6])
+    
+    bellcurve(NN, x_train, delta=delta)
     plt.show()
 if __name__ == "__main__":
     main()
