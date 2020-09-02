@@ -205,13 +205,13 @@ def bellcurve(NeuralNet, x_train, axis=[-5,5], delta=0.5):
     surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
                        linewidth=0, antialiased=False)
 
-    # Customize the z axis.
-    ax.set_zlim(-1.01, 1.01)
-    ax.zaxis.set_major_locator(LinearLocator(10))
-    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    # # Customize the z axis.
+    # ax.set_zlim(-1.01, 1.01)
+    # ax.zaxis.set_major_locator(LinearLocator(10))
+    # ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
-    # Add a color bar which maps values to colors.
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+    # # Add a color bar which maps values to colors.
+    # fig.colorbar(surf, shrink=0.5, aspect=5)
 
     plt.show()
 
@@ -240,13 +240,20 @@ def generateBelcurveData(axis=[-5,5], delta=0.5):
 def main():
     bias = True
     delta = 0.5
-    x_train, y_train = generateBelcurveData(delta=delta)
-    x_valid = x_train
-    y_valid = y_train
+    datasplit = 0.7
 
-    NN = neuralNetwork(bias=bias, layers=[100, 1])
+    x_valid, y_valid = generateBelcurveData(delta=delta)
+
+    n = np.size(y_valid, 1)
+    shuffler = np.random.permutation(n)
+    x_train = x_valid[:, shuffler]
+    y_train = y_valid[:, shuffler]
+    x_train = x_train[:,:round(n*datasplit)]
+    y_train = y_train[:,:round(n*datasplit)]
+
+    NN = neuralNetwork(bias=bias, layers=[2, 1])
     NN.initWeights()
-    epoch_vec, loss_vec_train = NN.train(x_train=x_train, y_train=y_train, epochs=100, eta=0.01, alpha=0.9)
+    epoch_vec, loss_vec_train = NN.train(x_train=x_train, y_train=y_train, epochs=1000, eta=0.01, alpha=0.9)
 
 
     plt.figure("Learning Curve")
@@ -256,12 +263,12 @@ def main():
     NN.eval(x_valid, y_valid, verbose=True)
 
     decision_boundary_multilayer(NeuralNet=NN,
-                                 x_train=x_train, 
-                                 y_train=y_train, 
+                                 x_train=x_valid, 
+                                 y_train=y_valid, 
                                  disc=100, 
                                  axis=[-6, 6])
     
-    bellcurve(NN, x_train, delta=delta)
-    plt.show()
+    bellcurve(NN, x_valid, delta=delta)
+
 if __name__ == "__main__":
     main()
