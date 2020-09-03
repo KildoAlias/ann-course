@@ -6,6 +6,7 @@ from generateData import generateClassData
 from progressBar import progressBar
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from alive_progress import alive_bar
 
 class neuralNetwork():
     def __init__(self, layers, bias=True):
@@ -135,36 +136,36 @@ class neuralNetwork():
         dw = np.zeros(np.shape(self.weights[0]))
         dv = np.zeros(np.shape(self.weights[1]))
         
-        progBar = progressBar(epochs)
+        # progBar = progressBar(epochs)
+        
         loss_vec_train = []
-        loss_vec_valid = []
         epoch_vec = []
         
+        with alive_bar(epochs) as bar:
+            # training for all the epochs.
+            for epoch in range(epochs):
+                bar()
+                # Forwarding
+                out_vec = forwardpass(x_train=x_train)
 
-        # training for all the epochs.
-        for epoch in range(epochs):
-            progBar.Progress(epoch)
-            # Forwarding
-            out_vec = forwardpass(x_train=x_train)
+                # Back propogating
+                delta_hidden, delta_output = backprop(out_vec, y_train)
 
-            # Back propogating
-            delta_hidden, delta_output = backprop(out_vec, y_train)
+                # Weights update
+                if self.bias:
+                    pat = np.concatenate((x_train, np.ones((1, np.shape(x_train)[1]))))
+                else:
+                    pat = x_train
+                dw = (dw * alpha) - (delta_hidden @ np.transpose(pat)) * (1 - alpha)
+                dv = (dv * alpha) - (delta_output @ np.transpose(out_vec[0])) * (1 - alpha)
 
-            # Weights update
-            if self.bias:
-                pat = np.concatenate((x_train, np.ones((1, np.shape(x_train)[1]))))
-            else:
-                pat = x_train
-            dw = (dw * alpha) - (delta_hidden @ np.transpose(pat)) * (1 - alpha)
-            dv = (dv * alpha) - (delta_output @ np.transpose(out_vec[0])) * (1 - alpha)
+                self.weights[0] = self.weights[0] + dw*eta
+                self.weights[1] = self.weights[1] + dv*eta
 
-            self.weights[0] = self.weights[0] + dw*eta
-            self.weights[1] = self.weights[1] + dv*eta
-
-            # Loss function 
-            loss_vec_train.append(self.loss_val(x_train, target=y_train))
-            epoch_vec.append(epoch)
-        return epoch_vec, loss_vec_train
+                # Loss function 
+                loss_vec_train.append(self.loss_val(x_train, target=y_train))
+                epoch_vec.append(epoch)
+            return epoch_vec, loss_vec_train
 
 
 def decision_boundary_multilayer(NeuralNet, x_train, y_train, disc=100, axis=[-1.5, 1.5]):
@@ -172,13 +173,13 @@ def decision_boundary_multilayer(NeuralNet, x_train, y_train, disc=100, axis=[-1
     y_val = np.linspace(axis[0], axis[1], disc).reshape(1,disc)
     
     x_vec = x_val
-    for i in range(disc-1):
+    for _ in range(disc-1):
         x_vec = np.concatenate((x_vec,x_val), axis=1)
     XY = np.concatenate((x_vec, x_vec), axis=0)
 
     index = 0
     for y in y_val[0]:
-        for i in range(disc):
+        for _ in range(disc):
             XY[1,index] = y
             index += 1
 
@@ -202,7 +203,7 @@ def bellcurve(NeuralNet, x_train, axis=[-5,5], delta=0.5):
 
     fig = plt.figure("3D Bellcurve function")
     ax = fig.gca(projection='3d')
-    surf = ax.plot_surface(X, Y, Z, cmap=cm.coolwarm,
+    surf = ax.plot_surface(X, Y, Z, cmap="jet",
                        linewidth=0, antialiased=False)
 
     # # Customize the z axis.
@@ -210,8 +211,8 @@ def bellcurve(NeuralNet, x_train, axis=[-5,5], delta=0.5):
     # ax.zaxis.set_major_locator(LinearLocator(10))
     # ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
-    # # Add a color bar which maps values to colors.
-    # fig.colorbar(surf, shrink=0.5, aspect=5)
+    # Add a color bar which maps values to colors.
+    fig.colorbar(surf, shrink=0.5, aspect=5)
 
     plt.show()
 
@@ -223,13 +224,13 @@ def generateBelcurveData(axis=[-5,5], delta=0.5):
     y_val = np.arange(-5, 5+delta, delta).reshape(1,-1)
 
     x_vec = x_val
-    for i in range(x_val.shape[1]-1):
+    for _ in range(x_val.shape[1]-1):
         x_vec = np.concatenate((x_vec,x_val), axis=1)
     x_train = np.concatenate((x_vec, x_vec), axis=0)
 
     index = 0
     for y in y_val[0]:
-        for i in range(y_val.shape[1]):
+        for _ in range(y_val.shape[1]):
             x_train[1,index] = y
             index += 1
 
@@ -241,7 +242,7 @@ def main():
     bias = True
     delta = 0.5
     datasplit = 0.7
-
+    
     x_valid, y_valid = generateBelcurveData(delta=delta)
 
     n = np.size(y_valid, 1)
@@ -251,7 +252,7 @@ def main():
     x_train = x_train[:,:round(n*datasplit)]
     y_train = y_train[:,:round(n*datasplit)]
 
-    NN = neuralNetwork(bias=bias, layers=[2, 1])
+    NN = neuralNetwork(bias=bias, layers=[4, 1])
     NN.initWeights()
     epoch_vec, loss_vec_train = NN.train(x_train=x_train, y_train=y_train, epochs=1000, eta=0.01, alpha=0.9)
 
@@ -260,7 +261,7 @@ def main():
     plt.plot(epoch_vec, loss_vec_train)
     plt.legend(("Training loss", "Validation loss"))
     
-    NN.eval(x_valid, y_valid, verbose=True)
+    print("MSE Value of validation data: {:.14f}".format(NN.loss_val(x_valid, y_valid)))
 
     decision_boundary_multilayer(NeuralNet=NN,
                                  x_train=x_valid, 

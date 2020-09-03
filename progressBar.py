@@ -3,7 +3,7 @@ import numpy as np
 
 class progressBar():
     def __init__(self,  iterations, update_rate=0):
-        self.iterations = iterations        # Maximum number of iterations
+        self.iterations = iterations-1       # Maximum number of iterations
         self.update_rate = update_rate      # Update rate, numbers before update. 
         self.rate = 0                       # Internal rate controller. 
 
