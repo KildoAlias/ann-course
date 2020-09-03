@@ -79,6 +79,7 @@ class neuralNetwork():
             plt.figure("Decision Boundary")
             plt.scatter(data[0, np.where(classified_data==targets)], data[1, np.where(classified_data==targets)], c="green")
             plt.scatter(data[0, np.where(classified_data!=targets)], data[1, np.where(classified_data!=targets)], c="red")
+        return accuracy
             
 
     def loss_val(self, data, target):
@@ -194,19 +195,21 @@ def decision_boundary_multilayer(NeuralNet, x_train, y_train, x_train_A, x_train
     plt.scatter(x_train_B[0,:], x_train_B[1,:], marker="_", c="black")
 
 def main():
-    n = 200
+    n = 20
     bias = True
-    epochs=400
+    epochs=200
     plt.figure("MSE_Layer")
     plt.xlabel("Epochs")
     plt.ylabel("Mean Square Error")
     plt.title("Mean Square Error For Different Layer Sizes")
     legends = []
-    x_vec=[2,10]
-    nAverages=5
+    x_vec=[10]
+    nAverages=10
     for x in x_vec:
-        x_train, y_train, x_valid, y_valid, x_train_A, x_train_B = generateClassData(n, proc_A=0.8, proc_B=0.8, verbose=False, linear=False)
+        accuracy=0
+        accuracy_vec=[]
         for i in range(nAverages):
+            x_train, y_train, x_valid, y_valid, x_train_A, x_train_B = generateClassData(n, proc_A=0.5, proc_B=0.5, case=2)
             print("Layer ", x, " Average ", i)
             print()
             factor=int(epochs/10)
@@ -214,7 +217,7 @@ def main():
             index=np.array(index)
             NN = neuralNetwork(bias=bias, layers=[x, 1])
             NN.initWeights()
-            epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=epochs, eta=0.001, alpha=0)
+            epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=epochs, eta=0.001, alpha=0.9)
             # plt.plot(epoch_vec,loss_vec_val)
             if i==0:
                 av=np.array(loss_vec_val)
@@ -222,21 +225,34 @@ def main():
             else:
                 av=(av + np.array(loss_vec_val))
                 all_loss=np.dstack((all_loss,np.array(loss_vec_val)))
+            accuracy_temp = NN.eval(x_valid, y_valid, verbose=False)
+            accuracy_vec.append(accuracy_temp)
+            accuracy += accuracy_temp
+            print()
+        accuracy /= nAverages
+        print("Average accuracy ", accuracy)
         av=av/nAverages
         S=np.zeros(av.shape[0])
+        accusum=0
         for i in range(nAverages):
+            accuDiff=accuracy_vec[i]-accuracy
+            accuDiff=accuDiff**2
+            accusum += accuDiff
             diff = np.subtract(all_loss[:,:,i],av)
             diff=np.power(diff,2)
             S=S+diff
+        accusum = accusum / (nAverages-1)
+        accusum=accusum**0.5
         S=S/(nAverages-1)
         S=np.sqrt(S)
         S=np.transpose(S)
         S=np.squeeze(S)
+        print("MSE Standard deviation",S[-1])
+        print("Accuracy standard deviation", accusum)
         S=np.multiply(S,index)
         plt.errorbar(epoch_vec,av,S)
         legends.append("Layer size = " + str(x))
         
-        # NN.eval(x_train, y_train, verbose=False)
     plt.legend(legends)
     plt.savefig("images/MSE_Layers")
     plt.show()

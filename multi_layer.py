@@ -196,11 +196,11 @@ def decision_boundary_multilayer(NeuralNet, x_train, y_train, x_train_A, x_train
 def main():
     n = 100
     bias = True
-    x_train, y_train, x_valid, y_valid, x_train_A, x_train_B = generateClassData(n, proc_A=0.8, proc_B=0.8, verbose=True, linear=False)
+    x_train, y_train, x_valid, y_valid, x_train_A, x_train_B = generateClassData(n, proc_A=1, proc_B=1, case=2)
 
     NN = neuralNetwork(bias=bias, layers=[200, 1])
     NN.initWeights()
-    epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=1000, eta=0.001, alpha=0)
+    epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train, y_train=y_train, x_valid=x_valid, y_valid=y_valid, epochs=1000, eta=0.1, alpha=0)
 
 
     plt.figure("Learning Curve")
@@ -208,7 +208,7 @@ def main():
     plt.plot(epoch_vec, loss_vec_val)
     plt.legend(("Training loss", "Validation loss"))
     
-    NN.eval(x_train, y_train, verbose=True)
+    NN.eval(x_valid, y_valid, verbose=True)
 
     decision_boundary_multilayer(NeuralNet=NN,
                                  x_train=x_train, 
