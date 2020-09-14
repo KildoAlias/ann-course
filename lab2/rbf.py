@@ -1,170 +1,81 @@
 
-
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import signal
+import math
+
+class RBF():
+
+    def __init__(self,dim,seed=42):
+        self.dim=dim
+        self.seed=seed
+        self.weights=None
+
+    def generateData(self,x):
+        sinus=np.sin(2*x)
+        square=signal.square(2*x)
+        return sinus,square
+
+    def initWeights(self,sigma=0.1):
+        weights = np.random.RandomState(seed=self.seed).randn(1, self.dim)*sigma
+        self.weights=np.transpose(weights)
+        return self.weights
+        
+
+    def deltaRule(self,trainingData,targetData):
+        print("Sequantial delta rule")
+
+ 
+    def transferFunction(self,x,mu,sigma):
+        PHI = np.zeros((x.shape[0], mu.shape[0]))
+        for i in range(x.shape[0]):
+            phi = np.exp((-(x[i]-mu)**2)/(2*sigma**2))
+            PHI[i,:] = phi
+        return PHI
+
+    def activationFunction(self,weights,phi):
+        function= phi @ weights
+        return function
 
 
-class perceptron():
+    def leastSquares(self, PHI, function):
+        # rest=trainingData%batchSize
+        # batches = [trainingData[i*batchSize:(i+1)*batchSize] for i in range(int(trainingData.shape[0]/batchSize))]
+        # batches.append(trainingData[-rest,-1])
+        self.weights = np.linalg.lstsq(PHI, function)
+        return self.weights[0],self.weights[1]
+        
+    def train(self,xtrain,ytrain,weights,mu, sigma):
+        phi=self.transferFunction(xtrain,mu,sigma)
+        function=self.activationFunction(weights,phi)
+        weights, error=self.leastSquares(phi, function)
+        return weights, error
 
-    def __init__(self, layers, bias=True, batch=True, learningRate=0.001, seed=42):
-        self.layers = layers
-        self.bias = bias
-        self.batch = batch
-        self.classData = None
-        self.T = None
-        self.classA = None
-        self.classB = None
-        self.W = None
-        self.learningRate = learningRate
-        self.seed = seed
-        self.outputs = None
-        return
+    def evaluation(self,xtest,weights,mu, sigma):
+        phi=self.transferFunction(xtest,mu,sigma)
+        return self.activationFunction(weights,phi)
 
+    def classify(self):
 
-    def initWeights(self, dim=2, sigma=1):
-        if self.bias:
-            dim += 1
-        self.W = np.random.RandomState(seed=self.seed).randn(1, dim)*sigma
-
-        return
-
-    def deltaRule(self):
-        if self.batch:
-            deltaW = -self.learningRate * \
-                np.dot((np.dot(self.W, self.classData) - self.T),
-                       np.transpose(self.classData))
-            self.W += deltaW
-        else:
-            deltaW = np.zeros(np.shape(self.W))
-            for i in range(np.shape(self.classData)[1]):
-                deltaW = -self.learningRate * \
-                    (np.dot(
-                        self.W, self.classData[:, i]) - self.T[:, i])*np.transpose(self.classData[:, i])
-                self.W += deltaW
-
-    def activationFunction(self, prediction):
-        if self.batch:
-            for index, p in enumerate(prediction[0]):
-                if p > 0:
-                    prediction[0, index] = 1
-                else:
-                    prediction[0, index] = -1
-        else:
-            if prediction > 0:
-                prediction = 1
-            else:
-                prediction = -1
-        return prediction
-
-    def perceptronLearning(self):
-        if self.batch:
-            deltaW = -self.learningRate * \
-                np.dot((self.activationFunction(np.dot(self.W, self.classData)) - self.T),
-                       np.transpose(self.classData))
-            self.W += deltaW
-        else:
-            deltaW = np.zeros(np.shape(self.W))
-            for i in range(np.shape(self.classData)[1]):
-                deltaW = -self.learningRate * \
-                    (self.activationFunction(np.dot(
-                        self.W, self.classData[:, i])) - self.T[:, i]) * np.transpose(self.classData[:, i])
-                self.W += deltaW
-
-    def train(self, epochs=50, verbose=True, method=1):
-        # Method 1 = Perceptron Learning
-        # Method 2 = Delta Rule
-        epoch_vec = []
-        loss_vals = []
-        for i in range(epochs):
-            if method == 1:
-                self.perceptronLearning()
-            elif method == 2:
-                self.deltaRule()
-            if verbose:
-                self.plotData(epoch=i)
-            epoch_vec.append(i)
-            loss_vals.append(self.evaluation())
-        if verbose:
-            plt.savefig("images/Decision boundary")
-            self.plotData(
-                name="Decision boundary - epochs ({})".format(i+1), epoch=i)
-            plt.savefig("images/Decision boundary - epochs ({})".format(i+1))
-        return epoch_vec, loss_vals
-
-    def classify(self, dataset=None):
-        try:
-            if dataset == None:
-                dataset = self.classData
-        except:
-            outputs = np.dot(self.W, dataset)
-            for index, output in enumerate(outputs[0]):
-                if output >= 0:
-                    outputs[0, index] = 1
-                else:
-                    outputs[0, index] = -1
-            self.outputs = outputs
-
-    def evaluation(self, dataset=None):
-        if dataset == None:
-            dataset = self.classData
-        self.classify(dataset)
-        loss_vec = self.outputs == self.T
-        nr_trues = np.count_nonzero(loss_vec)
-        loss_val = 1 - nr_trues/np.shape(self.T)[1]
-        return loss_val
-
+        pass
 
 def main():
-    # Parameters for generate_data
-    mA = np.array([1, 0.5])
-    mB = np.array([-1, 0])
-    nA = 100
-    nB = 100
-    sigmaA = 0.4
-    sigmaB = 0.4
+    ## generate data and define inputs
+    mu=np.array([3,6,2,5,3,7,6])
+    sigma=0.1
+    trainingData=np.arange(0,2*math.pi,0.1)
+    testData=np.arange(0.05,2*math.pi,0.1)
+    ## init rbf class
+    dim=mu.shape[0]
+    rbf=RBF(dim)
+    ## 
 
-    single_layer = perceptron(1, batch=False, learningRate=0.001, seed=42)
-    single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
-    single_layer.initWeights()
-    epoch_vec, loss_vals = single_layer.train(
-        method=2, verbose=True, epochs=10)
+    sinus,square    = rbf.generateData(trainingData)
+    weights         = rbf.initWeights()
+    weights, error  = rbf.train(trainingData, sinus, weights, mu, sigma)
+    ytest           = rbf.evaluation(testData, weights, mu, sigma)
 
-    # SEQ
-    ETA = [0.001, 0.002, 0.004]
-    legends = []
-    for eta in ETA:
-        plt.figure("Learning_Curve_seq")
-        single_layer = perceptron(1, batch=False, learningRate=eta, seed=42)
-        single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
-        single_layer.initWeights()
-        epoch_vec, loss_vals = single_layer.train(
-            method=2, verbose=False, epochs=10)
-        plt.plot(epoch_vec, [100*i for i in loss_vals], "-.")
-        legends.append("Learning rate = " + str(eta))
-    plt.title("Learning Curve, Sequential")
-    plt.xlabel("Epoch")
-    plt.ylabel("Missclassified [%]")
-    plt.legend(legends)
-    plt.savefig("images/Learning_Curve_seq")
-
-    # BATCH
-    ETA = [0.001, 0.002, 0.004]
-    legends = []
-    for eta in ETA:
-        plt.figure("Learning_Curve_batch")
-        single_layer = perceptron(1, batch=True, learningRate=eta, seed=42)
-        single_layer.generateClassData(nA, nB, mA, mB, sigmaA, sigmaB)
-        single_layer.initWeights()
-        epoch_vec, loss_vals = single_layer.train(
-            method=2, verbose=False, epochs=10)
-        plt.plot(epoch_vec, [100*i for i in loss_vals], "-.")
-        legends.append("Learning rate = " + str(eta))
-    plt.title("Learning Curve, Batch")
-    plt.xlabel("Epoch")
-    plt.ylabel("Missclassified [%]")
-    plt.legend(legends)
-    plt.savefig("images/Learning_Curve_batch")
-
-
+    plt.plot(testData, ytest)
+    plt.show()
 if __name__ == "__main__":
     main()
