@@ -6,8 +6,8 @@
 
 
 # 3.2 Regression with noise
-- [ ] Add zero-mean gaussian noize with variance 0.1
-- [ ] Fix: online-learning delta rule
+- [x] Add zero-mean gaussian noize with variance 0.1
+- [x] Fix: online-learning delta rule
 - [ ] how eta affects the learning rate
 - [ ] Vary number of nodes (delta rule & LS) - convergency?
 - [ ] Change the witdh of the kernel.
