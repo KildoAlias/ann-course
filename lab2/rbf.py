@@ -14,9 +14,13 @@ class RBF():
     def __str__(self):
         return 'Number of nodes: {} \nseed: {}'.format(self.dim, self.seed)
 
-    def generateData(self,x):
-        sinus=np.sin(2*x)
-        square=signal.square(2*x)
+    def generateData(self,x, noise=False, sigma=0.1):
+        if noise:
+            sinus = np.sin(2*x) + np.random.RandomState(seed=self.seed).randn(1, self.dim)*sigma
+            square = signal.square(2*x) + np.random.RandomState(seed=self.seed).randn(1, self.dim)*sigma
+        else:
+            sinus=np.sin(2*x)
+            square=signal.square(2*x)
         return sinus,square
 
     def initWeights(self,sigma=0.1):
