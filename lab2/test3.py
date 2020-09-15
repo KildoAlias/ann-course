@@ -1,11 +1,17 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 import math
+import matplotlib.pylab as pylab
+params = {'legend.fontsize': 'x-large',
+          'figure.figsize': (5, 5),
+         'axes.labelsize': 'x-large',
+         'axes.titlesize':'x-large',
+         'xtick.labelsize':'x-large',
+         'ytick.labelsize':'x-large'}
+pylab.rcParams.update(params)
 
 class RBF():
-
     def __init__(self,dim,seed=42):
         self.dim=dim
         self.seed=seed
@@ -50,7 +56,7 @@ class RBF():
    
         return weights
 
-    def train_DELTA(self, x_train, weights, mu, sigma, sinus_type=True, noise=True):
+    def train_DELTA(self, x_train, weights, mu, sigma, eta, sinus_type=True, noise=True):
         phi = self.transferFunction(x_train,mu,sigma)
 
         # Generate the first sinus with error.
@@ -68,11 +74,11 @@ class RBF():
         delta_error = 1
         epoch_vec = [1]
         epoch = 1
-        while abs(delta_error) > 0.01:
+        while abs(delta_error) > 0.001:
             epoch += 1
             epoch_vec.append(epoch)
             # Update weights with Delta-Rule
-            weights = self.deltaRule(x_train, y_train, weights, phi)
+            weights = self.deltaRule(x_train, y_train, weights, phi, eta=eta)
             output = self.evaluation_DELTA(x_train, weights, mu, sigma)
 
             # Stores the Residual-error and takes delta error for convergens
@@ -87,93 +93,57 @@ class RBF():
             y_train = y_train.reshape((y_train.shape[0],1))
 
 
-        return weights, error_vec, epoch_vec
+        return weights, error_vec, epoch_vec, epoch
 
     def evaluation_DELTA(self, xtest, weights, mu, sigma):
         phi=self.transferFunction(xtest,mu,sigma)
         return self.activationFunction(weights, phi)
 
+def sinus_delta(x_test, x_train, mu, sigma, eta):
+    dim=mu.shape[0]
+    rbf = RBF(dim)
+    
+    ## Generate data
+    sinus, _   = rbf.generateData(x_train, noise=True)
+    sinus_test, _ = rbf.generateData(x_test, noise=True)
+    sinus_test = sinus_test.reshape((sinus_test.shape[0],1))
+    ## Init and train.
+    weights         = rbf.initWeights()
+    weights, _, _,epoch  = rbf.train_DELTA(x_train, weights, mu, sigma, eta=eta)
 
-
-############### LS ################
-    def leastSquares(self, PHI, function):
-        # rest=trainingData%batchSize
-        # batches = [trainingData[i*batchSize:(i+1)*batchSize] for i in range(int(trainingData.shape[0]/batchSize))]
-        # batches.append(trainingData[-rest,-1])
-        self.weights = np.linalg.lstsq(PHI, function)
-        return self.weights[0],self.weights[1]
-        
-    def train_LS(self, x_train, y_train, weights, mu, sigma):
-        phi = self.transferFunction(x_train,mu,sigma)
-        weights, error = self.leastSquares(phi, y_train)
-        return weights, error
-
-    def evaluation_LS(self, xtest, weights, mu, sigma):
-        phi=self.transferFunction(xtest,mu,sigma)
-        return self.activationFunction(weights,phi)
-
-    def classify(self):
-
-        pass
+    ## Evaluation 
+    y_test = rbf.evaluation_DELTA(x_test, weights, mu, sigma)
+    tmp = abs(y_test - sinus_test)
+    residual_error = np.sum(abs(y_test - sinus_test))/y_test.shape[0]
+    return residual_error, y_test, sinus_test, epoch
 
 def main():
-    ## generate data and define inputs
-    mu = np.arange(0,2*math.pi,0.1)
-    sigma = 0.1
+    # GENERATES DATASET (TRAIN & TEST)
     x_train = np.arange(0,2*math.pi,0.1)
     x_test = np.arange(0.05,2*math.pi,0.1)
 
-    # #! DELTA RULE
-    ## init rbf class
-    dim=mu.shape[0]
-    rbf_delta=RBF(dim)
-    print(rbf_delta)
+    # KERNEL PARAMS 
+    sigma = 0.5
+    nr_nodes = 0.2
 
-    ## Generate data
-    sinus, square   = rbf_delta.generateData(x_train)
-    sinus_test, square_test = rbf_delta.generateData(x_test)
 
-    ## Init and train.
-    weights         = rbf_delta.initWeights()
-    weights, error_vec, epoch_vec  = rbf_delta.train_DELTA(x_train, weights, mu, sigma, sinus_type=False)
-    
-    plt.figure('Training Curve')
-    plt.plot(epoch_vec, error_vec)
-    plt.title('Training Curve')
-    plt.xlabel('Epoch')
-    plt.ylabel('Residual Error')
-
-    ## Evaluation 
-    y_test = rbf_delta.evaluation_DELTA(x_test, weights, mu, sigma)
-    plt.figure('Delta Rule')
-    plt.plot(x_test, y_test, label='Approximation')
-    plt.plot(x_test, square_test, label='True value')
-    plt.title('Delta Rule')
-    plt.legend()
-
-    #! LEAST SQUARE
-    ## init rbf class
-    dim=mu.shape[0]
-    rbf_LS=RBF(dim)
-    print(rbf_LS)
-
-    ## Generate data
-    sinus, square   = rbf_LS.generateData(x_train)
-    sinus_test, square_test = rbf_LS.generateData(x_test)
-
-    ## Init and train.
-    weights         = rbf_LS.initWeights()
-    weights, error  = rbf_LS.train_LS(x_train, square, weights, mu, sigma)
-    # print('Error (lstsq): ', error[0])
-    
-    ## Evaluation 
-    y_test = rbf_LS.evaluation_LS(x_test, weights, mu, sigma)
-    plt.figure('Least Square Error')
-    plt.plot(x_test, y_test, label='Approximation')
-    plt.plot(x_test, square_test, label='True value')
-    plt.title('Least Square Error')
-    plt.legend()
-    plt.show()
+    averages = 200
+    test_results = []
+  
+    eta_vec = [0.005, 0.01, 0.05, 0.1, 0.2, 0.3, 0.4]
+    for eta in eta_vec:
+        residuals_vec = []
+        epoch_vec = []
+        for _ in range(averages):
+            mu = np.arange(0,2*math.pi, nr_nodes)
+            error, y_test, _, epoch = sinus_delta(x_test, x_train, mu, sigma, eta)
+            residuals_vec.append(error)
+            epoch_vec.append(epoch)
+        error = sum(residuals_vec)/len(residuals_vec)
+        std = sum( (residuals_vec - error)**2 )/len(residuals_vec)
+        test_results.append([eta, error, std, sum(epoch_vec)/averages])
+    print('Results for Delta-Rule (SINUS) sigma: {}'.format(sigma))
+    for result in test_results: print('     ETA: {} Residual error: {:0.5f} std. {:.2e} avr. epochs {}'.format(result[0], result[1], result[2], result[3]))
 
 
 if __name__ == "__main__":
