@@ -87,7 +87,7 @@ class RBF():
 
 def main():
     ## generate data and define inputs
-    mu = np.arange(0,2*math.pi,0.2)
+    mu = np.arange(0,2*math.pi,0.1)
     sigma = 0.1
     x_train = np.arange(0,2*math.pi,0.1)
     x_test = np.arange(0.05,2*math.pi,0.1)
@@ -127,14 +127,14 @@ def main():
 
     ## Init and train.
     weights         = rbf_LS.initWeights()
-    weights, error  = rbf_LS.train_LS(x_train, sinus, weights, mu, sigma)
+    weights, error  = rbf_LS.train_LS(x_train, square, weights, mu, sigma)
     # print('Error (lstsq): ', error[0])
     
     ## Evaluation 
     y_test = rbf_LS.evaluation_LS(x_test, weights, mu, sigma)
     plt.figure('Least Square Error')
     plt.plot(x_test, y_test, label='Approximation')
-    plt.plot(x_test, sinus_test, label='True value')
+    plt.plot(x_test, square_test, label='True value')
     plt.title('Least Square Error')
     plt.legend()
     plt.show()
