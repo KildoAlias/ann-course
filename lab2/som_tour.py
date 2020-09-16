@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class SOM():
 
-    def __init__(self, nNodes, inputDim, nClass, eta=1):  # eta scrambled input = 1.1
+    def __init__(self, nNodes, inputDim, nClass, eta=0.85):  # eta scrambled input = 1.1
         self.nNodes = nNodes
         self.weights = None
         self.eta = eta
@@ -20,11 +20,8 @@ class SOM():
 
     def euclidianDist(self, pattern):
         dBest = 100000000
-        # print(pattern
         iBest = 0
         for i in range(self.weights.shape[0]):
-            # d = np.transpose(
-            #     pattern-self.weights[i][:])@(pattern-self.weights[i][:])
             d = np.linalg.norm(pattern-self.weights[i, :])
             if d < dBest:
                 dBest = d
@@ -32,31 +29,23 @@ class SOM():
         return iBest
 
     def neighbourhood(self, index, epoch, epochs):
-        if epoch/epochs <= 0.1:
+        if epoch/epochs <= 0.2:
             dist = 2
-        elif epoch/epochs <= 0.6:
+        elif epoch/epochs <= 0.5:
             dist = 1
         else:
             dist = 0
 
         neighbours = np.linspace(
             index-dist, index+dist, 2*dist+1)
-        # print(" neigh befoer = ", neighbours)
         neighbours = np.where(neighbours < 0, neighbours + 10, neighbours)
         neighbours = np.where(neighbours > 9, neighbours - 10, neighbours)
-        # print(" neigh = ", neighbours)
-        # print()
         return neighbours
 
     def weightsUpdate(self, pattern, neighbours):
         for i in neighbours:
-            # print(i)
-            # print('weight=', self.weights[int(i)][:])
-            # print('update=', self.eta*(pattern-self.weights[int(i)][:]))
-
             self.weights[int(i)][:] = self.weights[int(i)][:] + \
-                self.eta*(pattern-self.weights[int(i)][:])
-            # print('new weight=', self.weights[int(i)][:])
+                self.eta*np.subtract(pattern, self.weights[int(i)][:])
         return self.weights
 
 
@@ -66,16 +55,17 @@ def main():
                         0.8732, 0.6536], [0.6878, 0.5219], [0.8488, 0.3609], [0.6683, 0.2536], [0.6195, 0.2634]])
 
     plt.figure('map')
-    index = 0
+    xData = []
+    yData = []
     for data in cityData:
-        plt.scatter(data[0], data[1], c='red')
-        plt.text(data[0], data[1], str(index))
-        index += 1
+        xData.append(data[0])
+        yData.append(data[1])
+    plt.scatter(xData, yData, c='red', s=50)
 
     ####### init som and weights ###########
     som = SOM(nNodes=10, inputDim=2, nClass=10)
     weights = som.initWeights()
-    epochs = 40
+    epochs = 80
     ######################################
 
     ######## Training ###################
@@ -85,9 +75,7 @@ def main():
         datapoint = datapoint[shuffler]
         for i in datapoint:
             iBest = som.euclidianDist(cityData[i][:])
-            # print(iBest)
             neighbours = som.neighbourhood(iBest, epoch, epochs)
-            # print(neighbours)
             weights = som.weightsUpdate(cityData[i][:], neighbours)
         som.eta *= 0.95
     # ######################################
@@ -100,24 +88,29 @@ def main():
         winnerIndexes.append(iBest)
     # ######################################
 
+    # Make tour circluar
+    # winnerIndexes.append(winnerIndexes[0])
     winnerIndexes = sorted(winnerIndexes)
+    winnerIndexes = np.array(winnerIndexes)
+    print(winnerIndexes)
+
+    winnerIndexes = np.argsort(winnerIndexes)
+    winnerIndexes = np.hstack((winnerIndexes, winnerIndexes[0]))
 
     print(winnerIndexes)
+
     X = [cityData[i, 0] for i in winnerIndexes]
     Y = [cityData[i, 1] for i in winnerIndexes]
-    plt.plot(X, Y)
+    plt.plot(X, Y, linewidth=2, color='black')
 
-    # cityData = [x for _, x in sorted(zip(winnerIndexes, cityData))]
-    # print(cityData)
-    index = 0
     for data in weights:
-        plt.scatter(data[0], data[1], c='green')
-        plt.text(data[0], data[1], str(index))
-        index += 1
-
+        plt.scatter(data[0], data[1], c='blue', s=50)
+    plt.title('Cyclic Tour')
+    plt.legend(['Suggested tour', 'Actual cities', 'Weights'])
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.axis([0, 1.1, 0, 1.1])
     plt.show()
-
-    # print(winnerIndexes)
 
 
 if __name__ == "__main__":
