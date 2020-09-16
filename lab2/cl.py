@@ -7,7 +7,7 @@ import math
 
 #! Cl Class ONLY FOR 1-D DATA
 class CL():
-    def __init__(self,nUnits,data,width,steps,learningRate,show=False, info=True, nbSize=0):
+    def __init__(self,nUnits,data,width,steps,learningRate,show=False, info=True, winners=1):
         self.nUnits=nUnits
         self.weights=None
         self.data=data
@@ -18,8 +18,7 @@ class CL():
         self.learningRate=learningRate
         self.show=show
         self.step=None
-        self.nbSize=nbSize
-        self.neighbours=np.zeros(nbSize)
+        self.winners=np.zeros(winners,dtype=int)
         if self.show:
             self.y=np.zeros(nUnits)
             plt.show()
@@ -28,7 +27,7 @@ class CL():
         
 
     def __str__(self):
-        return 'CL class: \n Units: {} \n Datapoints: {} \n Dimensions: {} \n Neighbours: {}'.format(self.nUnits, self.nDataPoints, self.data.shape, self.nbSize)
+        return 'CL class: \n Units: {} \n Datapoints: {} \n Dimensions: {} \n Winners: {}'.format(self.nUnits, self.nDataPoints, self.data.shape, self.winners.shape[0])
     
     def initWeights(self):
         weights = np.random.uniform(0,1, self.nUnits)* np.amax(self.data)
@@ -40,23 +39,20 @@ class CL():
         self.trainingData=self.data[index]
 
     def selection(self):
-        distance=[self.trainingData-weight for weight in self.weights]
-        # distance=np.absolute(distance)
-        sortedDistance=sorted(distance[:])
-        self.winnerValue =sortedDistance[0]    
-        self.winnerIndex = np.where(distance == self.winnerValue)[0][0]
-        if self.nbSize !=0:
-            neighbours=sortedDistance[1:self.nbSize+1]
-            for i,  neighbour in enumerate(neighbours):
-                self.neighbours[i]=np.where(distance == neighbour)[0][0]
+
+        distance=[np.abs(self.trainingData-weight) for weight in self.weights]
+
+        for i in range(self.winners.shape[0]):
+            winnerValue =np.amin(distance)    
+            self.winnerIndex = np.where(distance == winnerValue)[0][0]
+            self.winners[i]=int(self.winnerIndex)
+            distance.pop(self.winnerIndex)
 
     def update(self):
-        self.weights[self.winnerIndex]=self.winnerValue+self.learningRate*(self.trainingData-self.winnerValue)
-        if self.nbSize !=0:
-            for neighbour in self.neighbours:
-                neighbour=int(neighbour)
-                self.weights[neighbour]=self.weights[neighbour]+self.learningRate*0.5*(self.trainingData-self.weights[neighbour])
-    
+
+        for winner in self.winners:
+            self.weights[winner]=self.weights[winner]+self.learningRate*(self.trainingData-self.weights[winner])
+
 
     
 
@@ -74,7 +70,9 @@ class CL():
         plt.clf()
         plt.title(self.step)
         plt.scatter(self.weights,self.y,c="b")
-        plt.pause(0.0001)
+        plt.scatter(self.trainingData,0,c="r")
+        plt.legend(["Weights" , "Sampled data"])
+        plt.pause(0.1)
         plt.axis(xmin=0,xmax=10)
 
 

@@ -17,7 +17,7 @@ def generateData(noisy,sigma):
 
 def main():
     data=generateData(noisy=False,sigma=0.1)
-    cl=CL(16,data,0.1,1000,0.01,show=True,nbSize=0)
+    cl=CL(64,data,0.1,1000,0.1,show=True,winners=4)
     cl.train()
 
 
