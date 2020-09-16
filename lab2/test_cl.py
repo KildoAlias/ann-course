@@ -6,12 +6,18 @@ import math
 from cl import CL
 
 
+def generateData(noisy,sigma):
+    data = np.arange(0,2*math.pi,0.2)
+    if noisy:
+        data=data+np.random.randn(data.shape[0])*sigma
+    return data
+
+
 
 
 def main():
-    x = np.arange(0,2*math.pi,0.2)
-    y=np.zeros(16)
-    cl=CL(16,x,0.1,1000,1)
+    data=generateData(noisy=False,sigma=0.1)
+    cl=CL(16,data,0.1,1000,0.01,show=True,nbSize=0)
     cl.train()
 
 
