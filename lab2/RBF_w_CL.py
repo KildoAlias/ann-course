@@ -2,19 +2,22 @@ from cl import CL
 from test_cl import readData
 from rbf_cl import RBF
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def main():
 
     # GENERATE DATASET
     x_train, y_train =readData('ballist.dat')
     x_test, y_true =readData('balltest.dat')
-    cl=CL(50,x_train,0.1,1000,0.4,show=False,winners=3)
+    cl=CL(10,x_train,0.5,1000,0.1,show=False,winners=1, info=False)
     cl.train()
 
     # PARAMETERS
-    mu = cl.weights
-    sigma = 1
+    # mu = cl.weights
+    mu = np.random.uniform(0,1,10)
+    mu = np.reshape(mu,(5,2))
+    print(mu.shape)
+    sigma = 0.1
 
     # INIT RBF
     rbf = RBF(mu.shape)
