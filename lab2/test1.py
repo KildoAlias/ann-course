@@ -23,7 +23,7 @@ def sinus_LS(x_test, x_train, mu, sigma):
     dim=mu.shape[0]
     rbf = RBF(dim)
     sinus, _   = rbf.generateData(x_train, noise=True)
-    sinus_test, _ = rbf.generateData(x_test, noise=False)
+    sinus_test, _ = rbf.generateData(x_test, noise=True)
 
     ## Init and train.
     weights         = rbf.initWeights()
@@ -38,7 +38,7 @@ def square_LS(x_test, x_train, mu, sigma):
     dim=mu.shape[0]
     rbf = RBF(dim)
     _, square   = rbf.generateData(x_train, noise=True)
-    _, square_test = rbf.generateData(x_test, noise=False)
+    _, square_test = rbf.generateData(x_test, noise=True)
 
     ## Init and train.
     weights         = rbf.initWeights()
@@ -76,7 +76,7 @@ def square_delta(x_test, x_train, mu, sigma):
 
     ## Init and train.
     weights         = rbf.initWeights()
-    weights, _, _  = rbf.train_DELTA(x_train, weights, mu, sigma)
+    weights, _, _  = rbf.train_DELTA(x_train, weights, mu, sigma, sinus_type=False)
     
     ## Evaluation 
     y_test = rbf.evaluation_DELTA(x_test, weights, mu, sigma)
@@ -90,8 +90,8 @@ def main():
     x_test = np.arange(0.05,2*math.pi,0.1)
 
     # KERNEL PARAMS 
-    sigma_vec = [ 0.1, 0.5, 1]
-    nr_nodes_vec = [ 0.4, 0.2, 0.1]
+    sigma_vec = [ 0.1, 0.5, 1, 2]
+    nr_nodes_vec = [2*math.pi/5]
 
     # SINUS LEAST SQUARE
     averages = 100
@@ -128,8 +128,8 @@ def main():
         print('Results for Least Square (SQUARE) sigma: {}'.format(sigma))
         for result in test_results: print('     NODES: {} Residual error: {:0.5f} std. {:.2e}'.format(result[0], result[1], result[2]))
 
-
-    sigma_vec = [0.01, 0.05 ,0.1]
+    nr_nodes_vec = [0.4]
+    sigma_vec = [ 0.1, 0.5, 1, 2]
     # SINUS DELTA-RULE
     print()
     print('#####################################################')

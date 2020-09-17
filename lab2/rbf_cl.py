@@ -22,7 +22,7 @@ class RBF():
     def transferFunction(self,x_train,mu,sigma):
         PHI = np.zeros((x_train.shape[0], mu.shape[0]))
         for i in range(x_train.shape[0]):
-            phi = np.exp( - (np.linalg.norm(x_train[i,:] - mu)**2) / (2*sigma**2) )
+            phi = np.exp( - (np.linalg.norm(x_train[i,:] - mu[i,:])**2) / (2*sigma**2) )
             PHI[i,:] = phi
         return PHI
 
@@ -50,7 +50,7 @@ class RBF():
         delta_error = 1
         epoch_vec = [1]
         # epoch = 1
-        epochs = 10000
+        epochs = 100
         # while abs(delta_error) > 0.000000001:
         for epoch in range(epochs):
             # epoch += 1

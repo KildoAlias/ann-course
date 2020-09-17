@@ -92,14 +92,14 @@ def main():
 
     # KERNEL PARAMS 
     sigma = 0.5
-    nr_nodes = 0.3
+    nr_nodes = 2*math.pi/16
     
     averages=1000
     test_results = []
     residuals_vec = []
     for _ in range(averages):
         mu = np.arange(0,2*math.pi, nr_nodes)
-        error, y_test, _ = sinus_LS(x_test, x_train, mu, sigma)
+        error, y_test, _ = square_delta(x_test, x_train, mu, sigma)
         residuals_vec.append(error)
     error = sum(residuals_vec)/len(residuals_vec)
     std = sum( (residuals_vec - error)**2 )/len(residuals_vec)
@@ -115,7 +115,7 @@ def main():
         for i in range(18):
             mu[i] = np.random.random(1)*2*math.pi
         
-        error, y_test, _ = sinus_LS(x_test, x_train, mu, sigma)
+        error, y_test, _ = square_delta(x_test, x_train, mu, sigma)
         residuals_vec.append(error)
     error = sum(residuals_vec)/len(residuals_vec)
     std = sum( (residuals_vec - error)**2 )/len(residuals_vec)

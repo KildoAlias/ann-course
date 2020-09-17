@@ -9,12 +9,12 @@ def main():
     # GENERATE DATASET
     x_train, y_train =readData('ballist.dat')
     x_test, y_true =readData('balltest.dat')
-    cl=CL(10,x_train,0.1,1000,0.4,show=False,winners=3)
+    cl=CL(50,x_train,0.1,1000,0.4,show=False,winners=3)
     cl.train()
 
     # PARAMETERS
     mu = cl.weights
-    sigma = 0.5
+    sigma = 1
 
     # INIT RBF
     rbf = RBF(mu.shape)
@@ -34,8 +34,7 @@ def main():
     plt.ylabel('Residual Error')
 
     y_test = rbf.evaluation_DELTA(x_test, weights, mu, sigma)
-    print('x: ', y_true[:,0])
-    print('y: ', y_true[:,1])
+
     plt.figure('Delta Rule')
     plt.scatter(y_true[:,0], y_true[:,1], label='True value')
     plt.scatter(y_test[:,0], y_test[:,1], label='Approximation')
