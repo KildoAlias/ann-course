@@ -14,40 +14,29 @@ class RBF():
     def __str__(self):
         return 'Number of nodes: {} \nseed: {}'.format(self.dim, self.seed)
 
-    def generateData(self,x, noise=False, sigma=0.1):
-        if noise:
-            sinus = np.sin(2*x) + np.random.randn(x.shape[0])*sigma
-            square = signal.square(2*x) + np.random.randn(x.shape[0])*sigma
-        else:
-            sinus=np.sin(2*x)
-            square=signal.square(2*x)
-        return sinus,square
 
     def initWeights(self,sigma=0.1):
-        weights = np.random.randn(1, self.dim)*sigma
-        self.weights=np.transpose(weights)
+        self.weights = np.random.randn(self.dim[0], self.dim[1])*sigma
         return self.weights
         
     def transferFunction(self,x_train,mu,sigma):
         PHI = np.zeros((x_train.shape[0], mu.shape[0]))
         for i in range(x_train.shape[0]):
-            phi = np.ex_trainp((-(x_train[i]-mu)**2)/(2*sigma**2))
+            phi = np.exp( - (np.linalg.norm(x_train[i,:] - mu)**2) / (2*sigma**2) )
             PHI[i,:] = phi
         return PHI
 
     def activationFunction(self,weights,phi):
-        function= phi @ weights
+        function = phi @ weights
         return function
 
 
 ############# DELTA ###############
-    def deltaRule(self, x_train, y_train, weights, phi, eta=0.08):
+    def deltaRule(self, x_train, y_train, weights, phi, eta=0.01):
         # print("Sequantial delta rule")
-        
         for i in range(phi.shape[0]):
             phi_tmp = phi[i,:].reshape((phi[i,:].shape[0],1))
-            weights += eta*(y_train[i] - (np.transpose(phi_tmp)@weights)[0][0])*phi_tmp
-   
+            weights = weights + eta*(y_train[i,:] - (np.transpose(phi_tmp) @ weights))[0] * phi_tmp
         return weights
 
     def train_DELTA(self, x_train, y_train, weights, mu, sigma):
@@ -60,18 +49,21 @@ class RBF():
         # Setting up the while-loop
         delta_error = 1
         epoch_vec = [1]
-        epoch = 1
-        while abs(delta_error) > 0.01:
-            epoch += 1
+        # epoch = 1
+        epochs = 10000
+        # while abs(delta_error) > 0.000000001:
+        for epoch in range(epochs):
+            # epoch += 1
             epoch_vec.append(epoch)
+
             # Update weights with Delta-Rule
+            phi = self.transferFunction(x_train,mu,sigma)
             weights = self.deltaRule(x_train, y_train, weights, phi)
             output = self.evaluation_DELTA(x_train, weights, mu, sigma)
 
             # Stores the Residual-error and takes delta error for convergens
             error_vec.append(np.sum(abs(output - y_train))/y_train.shape[0])
             delta_error = abs(error_vec[-2] - error_vec[-1])
-
         return weights, error_vec, epoch_vec
 
     def evaluation_DELTA(self, xtest, weights, mu, sigma):
@@ -79,27 +71,6 @@ class RBF():
         return self.activationFunction(weights, phi)
 
 
-
-############### LS ################
-    def leastSquares(self, PHI, function):
-        # rest=trainingData%batchSize
-        # batches = [trainingData[i*batchSize:(i+1)*batchSize] for i in range(int(trainingData.shape[0]/batchSize))]
-        # batches.append(trainingData[-rest,-1])
-        self.weights = np.linalg.lstsq(PHI, function)
-        return self.weights[0],self.weights[1]
-        
-    def train_LS(self, x_train, y_train, weights, mu, sigma):
-        phi = self.transferFunction(x_train,mu,sigma)
-        weights, error = self.leastSquares(phi, y_train)
-        return weights, error
-
-    def evaluation_LS(self, xtest, weights, mu, sigma):
-        phi=self.transferFunction(xtest,mu,sigma)
-        return self.activationFunction(weights,phi)
-
-    def classify(self):
-
-        pass
 
 def main():
     ## generate data and define inputs

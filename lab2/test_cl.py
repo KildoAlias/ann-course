@@ -14,9 +14,9 @@ def generateData(noisy,sigma):
     return data
 
 
-def readData():
+def readData(file):
     inputData = np.array([])
-    with open('ballist.dat', 'r') as f:
+    with open(file, 'r') as f:
         d = f.readlines()
         index=0
         for i in d:
