@@ -8,74 +8,96 @@ import time
 
 
 class RNN():
-    def __init__(self, size=8, diagonal=True, sequential=False, random=True):
+    def __init__(self, size=8, diagonal=True, sequential=False, random=False):
         self.size = size
         self.diagonal = diagonal
         self.weights = np.zeros((size,size))
         self.sequential=sequential
         self.random = random
-
     
     def init_weights(self, patterns):
-        if self.sequential and self.random:
-            random_vec = np.random.permutation(np.linspace(0, self.size - 1, self.size))
-            for pattern in patterns:
-                for i in random_vec:
-                    i = int(i)
-                    for j in random_vec:  
-                        j = int(j)
-                        self.weights[i][j] += pattern[0][i]*pattern[0][j]
-        
-        elif self.sequential and not self.random:
-            for pattern in patterns:
-                for i in range(self.size):
-                    for j in range(self.size):  
-                        self.weights[i][j] += pattern[0][i]*pattern[0][j]
+        patterns_copy=patterns.copy()
+
+        if self.sequential:
+            for i in range(self.size):
+                for j in range(self.size): 
+                    for pattern in patterns_copy: 
+                        self.weights[i][j] = self.weights[i][j] + pattern[0][i]*pattern[0][j]
+            self.weights /= self.size
+
         elif self.diagonal:
             for x in patterns:
                 self.weights += (np.transpose(x) @ x)
             self.weights /= self.size
+
         else:
             for x in patterns:
                 self.weights += (np.transpose(x) @ x)
-
             self.weights /= self.size
             for i in range(self.weights.shape[0]):                                  # Removes diagonal elements
                 self.weights[i,i] = 0 
 
     def update(self, x):
-        if self.sequential:
-            x_new=np.zeros((x.shape[0],x.shape[1]))
-            for i in range(self.size):
-                for j in range(self.size):
-                    x_new[0][i] += self.weights[i][j]*x[0][j]
-                x_new = np.sign(x_new)
+        if self.sequential and self.random:
+            random_vec = np.random.permutation(np.linspace(0, self.size - 1, self.size))
+            x_new = x.copy()
+            for i in random_vec:
+                i = int(i)
+                sum_tmp=0
+                for j in random_vec:
+                    j = int(j)
+                    sum_tmp += self.weights[i][j]*x_new[0][j]
+                if sum_tmp < 0:
+                    x_new[0][i] = -1
+                else: 
+                    x_new[0][i] = 1
             x_new = np.transpose(x_new)
+
+        elif self.sequential:
+            x_new = x.copy()
+            for i in range(self.size):
+                sum_tmp=0
+                for j in range(self.size):
+                    sum_tmp += self.weights[i][j]*x_new[0][j]
+                if sum_tmp < 0:
+                    x_new[0][i] = -1
+                else: 
+                    x_new[0][i] = 1
+            x_new = np.transpose(x_new)
+
         else:    
-            x_new = np.sign(self.weights @ np.transpose(x))
+            tmp = self.weights @ np.transpose(x)
+            x_new = np.where(tmp>=0, 1, -1)
         return np.transpose(x_new)
 
     def train(self, x):
-        x_old = np.zeros((1,self.size))                                           # HÅRD SOM FAN
+        x_old = np.zeros((1,self.size)) 
         x_new = x  
         iteration = 0
+
         while not (x_new == x_old).all():
             iteration += 1
             x_old = x_new
             x_new = self.update(x_old)
+
         print("Iteration: {}".format(iteration))
-        # print("Results: ", x_new)
         return x_new
 
-    def plot_weights(self): # JÄVLIGT HÅRD
-        fig = plt.figure()
-        ax = plt.axes(projection='3d')
-        X, Y = np.meshgrid(np.arange(0,8,1), np.arange(0,8,1))
-        ax.plot_surface(X, Y, self.weights, rstride=1, cstride=1,
-                cmap='jet', edgecolor='none')
 
-        ax.set_title('finaplot');
+    def layapunovFunction(self, x, verbose=True):
+        energi = 0
+        for i in range(self.size):
+            for j in range(self.size):
+                energi -= self.weights[i][j]*x[0][i]*x[0][j]
+        # if verbose:
+        #     fig = plt.figure()
+        #     ax = plt.axes(projection='3d')
+        #     X, Y = np.meshgrid(x, x)
+        #     ax.plot_surface(X, Y, energi, rstride=1, cstride=1,
+        #             cmap='jet', edgecolor='none')
 
+        #     ax.set_title('finaplot');
+        return energi
 
 
 
@@ -95,7 +117,7 @@ def main():
     
     patterns = [x1, x2, x3]
     patterns_distorted = [x1d, x2d, x3d]
-    network = RNN()
+    network = RNN(sequential=False)                      # SEQuAENTIOAL WARNING
     network.init_weights(patterns)
     print(patterns)
 

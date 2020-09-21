@@ -22,7 +22,7 @@ def main():
     patterns_1_3 = [patterns[index,:].reshape(1,1024) for index in range(3) ]
     patterns_10_11 = [patterns[9+index,:].reshape(1,1024) for index in range(2) ]
 
-    network = RNN(size=1024, sequential=True)
+    network = RNN(size=1024, sequential=True, random=True)
     network.init_weights(patterns_1_3)
 
 
@@ -38,7 +38,7 @@ def main():
         plt.title('Pattern: {}'.format(index))
         x_output = network.train(pattern)
         print('Number of correct: {}/{} '.format(np.count_nonzero(x_output==pattern), pattern.shape[1]))
-        plt.imshow(x_output.reshape(32,32), cmap='gray')
+        plt.imshow(pattern.reshape(32,32), cmap='gray')
 
 
 
@@ -56,14 +56,6 @@ def main():
             sub_index += 1
             print('Number of correct: {}/{} '.format(np.count_nonzero(x_output==true_pattern), true_pattern.shape[1]))
         plt.imshow(x_output.reshape(32,32), cmap='gray')
-
-
-
-
-
-
-
-
     plt.show()
 
 
