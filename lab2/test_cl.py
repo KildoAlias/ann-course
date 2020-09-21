@@ -36,14 +36,14 @@ def readData(file):
 
 def main():
     # inputData=generateData(noisy=False,sigma=0.1)
-    inputData,outputData=readData()
-    cl=CL(100,inputData,0.1,1000,0.4,show=False,winners=3)
+    inputData,outputData=readData('ballist.dat')
+    cl=CL(50,inputData,1,2000,0.2,show=True,winners=2)
     cl.train()
 
 
-    plt.scatter(cl.weights[:,0],cl.weights[:,1],c="b")
-    plt.scatter(inputData[:,0],inputData[:,1],c="r")
-    plt.show()
+    # plt.scatter(cl.weights[:,0],cl.weights[:,1],c="b")
+    # plt.scatter(inputData[:,0],inputData[:,1],c="r")
+    # plt.show()
 
     
 
