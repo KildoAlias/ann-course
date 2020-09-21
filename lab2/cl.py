@@ -63,21 +63,24 @@ class CL():
             self.trainingVector()
             self.selection()
             self.update()
-            if self.show:
-                self.plot()
+        if self.show:
+            self.plot()
 
     
     def plot(self):
-        plt.clf()
-        plt.title(self.step)
-    
+        plt.title("RBF centers")
         weights = self.weights
-        plt.scatter(self.trainingData[0],self.trainingData[1],c="r")
-        plt.scatter(weights[:,0],weights[:,1],c="b")
-        # plt.scatter(self.trainingData,0,c="r")
-        plt.legend(["Weights" , "Sampled data"])
-        plt.pause(0.001)
-        plt.axis(xmin=0,xmax=10)
+        if self.data.shape[1]==1:
+            y=np.zeros(self.nUnits)
+        else:
+            y=weights[:,1]
+            plt.scatter(self.data[:,0],self.data[:,1],c="r")
+        plt.scatter(weights[:,0],y,c="b")
+        plt.legend(["Data","Weights"])
+        # plt.axis(xmin=0,xmax=6.5)
+        plt.xlabel("x")
+        plt.ylabel("y")
+        plt.show()
 
 
 
