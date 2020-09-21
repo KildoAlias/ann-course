@@ -20,8 +20,8 @@ def residualError(dataset,trueData):
 
 def main():
     ## generate data and define inputs
-    mu = np.arange(0,2*math.pi,0.0001)
-    sigma = 0.01
+    mu = np.arange(0,2*math.pi,0.1)
+    sigma = 0.1
     x_train = np.arange(0,2*math.pi,0.1)
     x_test = np.arange(0.05,2*math.pi,0.1)
 
@@ -38,11 +38,11 @@ def main():
 
     ## Init and train.
     weights         = rbf_LS.initWeights()
-    weights, error  = rbf_LS.train_LS(x_train, square, weights, mu, sigma)
+    weights, error  = rbf_LS.train_DELTA(x_train, square, weights, mu, sigma)
     
     ## Evaluation 
     print(rbf_LS)
-    y_test = rbf_LS.evaluation_LS(x_test, weights, mu, sigma)
+    y_test = rbf_LS.evaluation_DELTA(x_test, weights, mu, sigma)
     # y_test=threshold(y_test)
     re=residualError(y_test,square_test)
     plt.figure('Least Square Error')

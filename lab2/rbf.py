@@ -135,7 +135,7 @@ def main():
 
     ## Init and train.
     weights         = rbf_delta.initWeights()
-    weights, error_vec, epoch_vec  = rbf_delta.train_DELTA(x_train, weights, mu, sigma, sinus_type=False)
+    weights, error_vec, epoch_vec  = rbf_delta.train_DELTA(x_train, weights, mu, sigma, sinus_type=True)
     
     plt.figure('Training Curve')
     plt.plot(epoch_vec, error_vec)
@@ -147,7 +147,7 @@ def main():
     y_test = rbf_delta.evaluation_DELTA(x_test, weights, mu, sigma)
     plt.figure('Delta Rule')
     plt.plot(x_test, y_test, label='Approximation')
-    plt.plot(x_test, square_test, label='True value')
+    plt.plot(x_test, sinus_test, label='True value')
     plt.title('Delta Rule')
     plt.legend()
 
