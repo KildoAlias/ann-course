@@ -22,8 +22,10 @@ class RBF():
     def transferFunction(self,x_train,mu,sigma):
         PHI = np.zeros((x_train.shape[0], mu.shape[0]))
         for i in range(x_train.shape[0]):
-            phi = np.exp( - (np.linalg.norm(x_train[i,:] - mu)**2) / (2*sigma**2) )
-            PHI[i,:] = phi
+            for j in range(mu.shape[0]):
+                phi = np.exp( - (np.linalg.norm(x_train[i,:] - mu[j,:])**2) / (2*sigma**2) )
+                PHI[i,j] = phi
+
         return PHI
 
     def activationFunction(self,weights,phi):
@@ -32,9 +34,10 @@ class RBF():
 
 
 ############# DELTA ###############
-    def deltaRule(self, x_train, y_train, weights, phi, eta=0.01):
+    def deltaRule(self, x_train, y_train, weights, phi, eta=0.1):
         # print("Sequantial delta rule")
         for i in range(phi.shape[0]):
+
             phi_tmp = phi[i,:].reshape((phi[i,:].shape[0],1))
             weights = weights + eta*(y_train[i,:] - (np.transpose(phi_tmp) @ weights))[0] * phi_tmp
         return weights
@@ -50,7 +53,7 @@ class RBF():
         delta_error = 1
         epoch_vec = [1]
         # epoch = 1
-        epochs = 10000
+        epochs = 100
         # while abs(delta_error) > 0.000000001:
         for epoch in range(epochs):
             # epoch += 1

@@ -129,7 +129,9 @@ class neuralNetwork():
         epoch = 1
         with alive_bar(epochs) as bar:
             # training for all the epochs.
-            while old_val_loss - val_loss > 0:
+            while epoch < 50000:
+                # if epoch > 2000000:
+                #     break
             # for epoch in range(epochs):
                 bar()
                 old_val_loss = val_loss

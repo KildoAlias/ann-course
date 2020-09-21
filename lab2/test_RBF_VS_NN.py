@@ -28,7 +28,7 @@ def main():
 
     # NN
     nodes = mu.shape[0]
-    bias = True
+    bias = False
     NN = neuralNetwork(bias=bias, layers=[nodes, 1])
     NN.initWeights()
 
@@ -64,6 +64,8 @@ def main():
     y_test_NN = y_test.reshape((1, y_test.shape[0]))
 
 
+
+
     ## Training the NN
     epoch_vec, loss_vec_train, loss_vec_val = NN.train(x_train=x_train_NN, y_train=y_train_NN, x_valid=x_valid_NN, y_valid=y_valid_NN, epochs=2000000, eta=0.001, alpha=0)
     print("Patient=1 triggerad at epoch: ", epoch_vec[-1])
@@ -91,7 +93,7 @@ def main():
     plt.title('Single Hidden Layer VS RBF')
     plt.plot(x_test, y_test_RBF, label='RBF')
     plt.plot(x_test_NN[0], output[0], label='Single Hidden Layer')
-    plt.plot(x_test, y_test, label='True Value')    
+    plt.plot(x_test, y_test, label='True Value', color='black')    
     plt.xlabel('x')
     plt.ylabel('f(x)')
     plt.legend()
