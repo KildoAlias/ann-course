@@ -16,16 +16,6 @@ def loadData(file):
     return data
 
 
-def distort(pattern,noise):
-    pattern=pattern[:]
-    pattern=np.squeeze(pattern)
-    size=pattern.shape[0]
-    noise=int(np.floor(noise/100*size))
-    index=np.random.randint(0,size,noise)
-    distorted=np.where(pattern[index]==1, -1, 1)
-    pattern[index]=distorted
-    return pattern
-
     
 
 
@@ -40,7 +30,6 @@ def main():
 
     network = RNN(size=1024, sequential=False, random=True)
     network.init_weights(patterns_1_3)
-    distort(patterns_1_3[0],10)
 
 
     for index, pattern in enumerate(patterns_1_3):
