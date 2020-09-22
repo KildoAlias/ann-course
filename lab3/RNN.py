@@ -80,7 +80,7 @@ class RNN():
             x_old = x_new
             x_new = self.update(x_old)
 
-        print("Iteration: {}".format(iteration))
+        # print("Iteration: {}".format(iteration))
         return x_new
 
 
