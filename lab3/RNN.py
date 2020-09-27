@@ -34,8 +34,7 @@ class RNN():
             for x in patterns:
                 self.weights += (np.transpose(x) @ x)
             self.weights /= self.size
-            for i in range(self.weights.shape[0]):                                  # Removes diagonal elements
-                self.weights[i,i] = 0 
+            np.fill_diagonal(self.weights, 0)
 
     def update(self, x):
         if self.sequential and self.random:
@@ -75,12 +74,12 @@ class RNN():
         x_new = x  
         iteration = 0
 
-        while not (x_new == x_old).all():
+        while not (x_new == x_old).all() and iteration < 1000:
             iteration += 1
             x_old = x_new
             x_new = self.update(x_old)
 
-        # print("Iteration: {}".format(iteration))
+            # print("Iteration: {}".format(iteration))
         return x_new
 
 
