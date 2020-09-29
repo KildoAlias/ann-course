@@ -2,6 +2,7 @@ from util import *
 from rbm import RestrictedBoltzmannMachine
 from dbn import DeepBeliefNet
 
+
 if __name__ == "__main__":
 
     image_size = [28, 28]
@@ -12,20 +13,31 @@ if __name__ == "__main__":
 
     print ("\nStarting a Restricted Boltzmann Machine..")
 
-    rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
-                                     ndim_hidden=500,
-                                     is_bottom=True,
-                                     image_size=image_size,
-                                     is_top=False,
-                                     n_labels=10,
-                                     batch_size=20
-                                     )
+    hidden_vec = [200, 250, 300, 350, 400, 450, 500]
+    plt.figure('Learning Curves')
+    for ndim_hidden in hidden_vec:
+        rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
+                                         ndim_hidden=ndim_hidden,
+                                         is_bottom=True,
+                                         image_size=image_size,
+                                         is_top=False,
+                                         n_labels=10,
+                                         batch_size=20
+                                         )
 
-    # print ("shape of training data: ",train_imgs.shape)
-    rbm.cd1(visible_trainset=train_imgs, n_iterations=10)
+        # print ("shape of training data: ",train_imgs.shape)
+        loss_vec, it_vec = rbm.cd1(
+            visible_trainset=train_imgs, n_iterations=10)
+        plt.plot(it_vec, loss_vec, label='Hidden Units: {}'.format(ndim_hidden))
+        print('ndim hidden Units:{} \t loss value: {}'.format(
+            ndim_hidden, loss_vec[-1]))
+    plt.title('Learning Curve RBM')
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
 
     quit()
-
     ''' deep- belief net '''
     print ("\nStarting a Deep Belief Net..")
 

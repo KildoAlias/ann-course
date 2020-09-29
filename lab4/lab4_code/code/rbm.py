@@ -44,7 +44,8 @@ class RestrictedBoltzmannMachine():
         self.weight_h_to_v = None
         self.learning_rate = 0.0001
         self.momentum = 0.7
-        self.print_period = 5000
+        self.print_period = 1
+        self.figure_period = 1000
 
         self.rf = {  # receptive-fields. Only applicable when visible layer is input data
             "period": 5000,  # iteration period to visualize
@@ -74,17 +75,20 @@ class RestrictedBoltzmannMachine():
         # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
 
         # print(self.weight_vh.shape)
-
+        loss_vec = []
+        it_vec = []
         for it in range(n_iterations):
+            reconstructed_input = np.zeros(visible_trainset.shape)
             for batch in range(n_batch):
                 visible_minibatch = visible_trainset[batch *
                                                      self.batch_size:self.batch_size+batch*self.batch_size][:]
 
                 # Get v0
                 on_prob = sigmoid(self.bias_v)
-                activations = sample_binary(on_prob)
-                v0 = (on_prob, activations)
+
                 v0 = (on_prob, visible_minibatch)
+                # plt.imshow(v0[1][0][:].reshape(28, 28))
+                # plt.show()
 
                 # print(v0.shape)
 
@@ -93,11 +97,15 @@ class RestrictedBoltzmannMachine():
                 vk = self.get_v_given_h(h0[1])
 
                 hk = self.get_h_given_v(vk[1])
+
+                reconstructed_input[batch*self.batch_size:self.batch_size +
+                                    batch*self.batch_size][:] = vk[1]
                 # print(hk_activation.shape)
 
             # [DONE TASK 4.1] update the parameters using function 'update_params'
 
-            self.update_params(v0, h0, vk, hk)
+                self.update_params(v0, h0, vk, hk)
+                # if batch % self.figure_period == 0:
 
             # visualize once in a while when visible layer is input images
 
@@ -107,13 +115,28 @@ class RestrictedBoltzmannMachine():
                     (self.image_size[0], self.image_size[1], -1)), it=it, grid=self.rf["grid"])
 
             # print progress
-
+            loss = np.linalg.norm(
+                visible_trainset - reconstructed_input)/visible_trainset.shape[0]
+            loss_vec.append(loss)
+            it_vec.append(it)
             if it % self.print_period == 0:
+                print ("iteration=%3d/%3d \t recon_loss=%4.4f" %
+                       (it, n_iterations, loss))
 
-                print ("iteration=%7d recon_loss=%4.4f" %
-                       (it, np.linalg.norm(visible_trainset - visible_trainset)))
+        # plt.figure('Training Curve')
+        # plt.plot(it_vec, loss_vec, label='Train')
+        # plt.xlabel('Iteration')
+        # plt.ylabel('Loss')
 
-        return
+        # plt.figure('Digit Estimate')
+        # for i in range(9):
+        #     plt.subplot(3, 3, i+1)
+        #     first_im = vk[1][i][:]
+        #     first_im = first_im.reshape(28, 28)
+        #     plt.imshow(first_im, label=)
+        # plt.show()
+
+        return loss_vec, it_vec
 
     def update_params(self, v_0, h_0, v_k, h_k):
         """Update the weight and bias parameters.
@@ -129,12 +152,11 @@ class RestrictedBoltzmannMachine():
         """
 
         # [DONE TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
-
-        self.delta_bias_v += np.sum(self.learning_rate*(v_0[0]-v_k[0]), axis=0)
-        self.delta_weight_vh += self.learning_rate * \
-            (np.dot(np.transpose(v_0[1]), h_0[1]) -
-             np.dot(np.transpose(v_k[1]), h_k[1]))
-        self.delta_bias_h += np.sum(self.learning_rate*(h_0[0]-h_k[0]), axis=0)
+        self.delta_bias_v = np.sum(self.learning_rate*(v_0[1]-v_k[1]), axis=0)
+        self.delta_weight_vh = self.learning_rate * \
+            (np.dot(np.transpose(v_0[1]), h_0[0]) -
+             np.dot(np.transpose(v_k[1]), h_k[0]))
+        self.delta_bias_h = np.sum(self.learning_rate*(h_0[0]-h_k[0]), axis=0)
 
         self.bias_v += self.delta_bias_v
         self.weight_vh += self.delta_weight_vh
