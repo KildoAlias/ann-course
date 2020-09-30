@@ -1,7 +1,7 @@
 from util import *
 from rbm import RestrictedBoltzmannMachine
 from dbn import DeepBeliefNet
-
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     print ("\nStarting a Restricted Boltzmann Machine..")
 
     hidden_vec = [200, 250, 300, 350, 400, 450, 500]
-    plt.figure('Learning Curves')
+    loss_matrix = []
     for ndim_hidden in hidden_vec:
         rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
                                          ndim_hidden=ndim_hidden,
@@ -28,9 +28,16 @@ if __name__ == "__main__":
         # print ("shape of training data: ",train_imgs.shape)
         loss_vec, it_vec = rbm.cd1(
             visible_trainset=train_imgs, n_iterations=10)
-        plt.plot(it_vec, loss_vec, label='Hidden Units: {}'.format(ndim_hidden))
-        print('ndim hidden Units:{} \t loss value: {}'.format(
+        loss_matrix.append(loss_vec)
+        print('ndim hidden Units:{} \t loss value: {}\n'.format(
             ndim_hidden, loss_vec[-1]))
+
+    plt.figure('Learning Curves')
+    i = 0
+    for loss_vec in loss_matrix:
+        plt.plot(it_vec, loss_vec,
+                 label='Hidden Units: {}'.format(hidden_vec[i]))
+        i += 1
     plt.title('Learning Curve RBM')
     plt.xlabel('Iteration')
     plt.ylabel('Loss')

@@ -1,5 +1,5 @@
 from util import *
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -121,7 +121,7 @@ class RestrictedBoltzmannMachine():
             it_vec.append(it)
             if it % self.print_period == 0:
                 print ("iteration=%3d/%3d \t recon_loss=%4.4f" %
-                       (it, n_iterations, loss))
+                       (it+1, n_iterations, loss))
 
         # plt.figure('Training Curve')
         # plt.plot(it_vec, loss_vec, label='Train')
