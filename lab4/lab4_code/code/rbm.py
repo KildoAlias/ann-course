@@ -48,7 +48,7 @@ class RestrictedBoltzmannMachine():
         self.figure_period = 1000
 
         self.rf = {  # receptive-fields. Only applicable when visible layer is input data
-            "period": 5000,  # iteration period to visualize
+            "period": 10,  # iteration period to visualize
             "grid": [5, 5],  # size of the grid
             # pick some random hidden units
             "ids": np.random.randint(0, self.ndim_hidden, 25)
@@ -77,6 +77,7 @@ class RestrictedBoltzmannMachine():
         # print(self.weight_vh.shape)
         loss_vec = []
         it_vec = []
+        n_iterations += 1
         for it in range(n_iterations):
             reconstructed_input = np.zeros(visible_trainset.shape)
             for batch in range(n_batch):
@@ -108,8 +109,9 @@ class RestrictedBoltzmannMachine():
                 # if batch % self.figure_period == 0:
 
             # visualize once in a while when visible layer is input images
-
+            # print(it % self.rf["period"])
             if it % self.rf["period"] == 0 and self.is_bottom:
+                # print('in yo bi')
 
                 viz_rf(weights=self.weight_vh[:, self.rf["ids"]].reshape(
                     (self.image_size[0], self.image_size[1], -1)), it=it, grid=self.rf["grid"])

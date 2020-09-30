@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     print ("\nStarting a Restricted Boltzmann Machine..")
 
-    hidden_vec = [200, 250, 300, 350, 400, 450, 500]
+    hidden_vec = [500]
     plt.figure('Learning Curves')
     for ndim_hidden in hidden_vec:
         rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
         # print ("shape of training data: ",train_imgs.shape)
         loss_vec, it_vec = rbm.cd1(
-            visible_trainset=train_imgs, n_iterations=10)
+            visible_trainset=train_imgs, n_iterations=20)
         plt.plot(it_vec, loss_vec, label='Hidden Units: {}'.format(ndim_hidden))
         print('ndim hidden Units:{} \t loss value: {}'.format(
             ndim_hidden, loss_vec[-1]))
