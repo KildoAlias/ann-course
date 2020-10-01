@@ -51,11 +51,11 @@ class RestrictedBoltzmannMachine():
         
         self.weight_h_to_v = None
 
-        self.learning_rate = 0.01
+        self.learning_rate = 1/batch_size
         
         self.momentum = 0.7
 
-        self.print_period = 5000
+        self.print_period = 1
         
         self.rf = { # receptive-fields. Only applicable when visible layer is input data
             "period" : 5000, # iteration period to visualize
@@ -90,12 +90,18 @@ class RestrictedBoltzmannMachine():
         it_vec = []
         for it in range(n_iterations):
             reconstructed_input = np.zeros(visible_trainset.shape)
+            reconstructed_hidden = np.zeros((visible_trainset.shape[0],self.ndim_hidden))
             for batch in range(n_batch):
                 visible_minibatch = visible_trainset[batch *
                                                      self.batch_size:self.batch_size+batch*self.batch_size][:]
 
                 # Get v0
+                # temp= sigmoid(self.bias_v)
+                # for b in range(self.batch_size-1):
+                #     temp=np.vstack((temp,sigmoid(self.bias_v)))
                 on_prob = sigmoid(self.bias_v)
+                # print(on_prob.shape)
+                
 
                 v0 = (on_prob, visible_minibatch)
                 # plt.imshow(v0[1][0][:].reshape(28, 28))
@@ -111,6 +117,8 @@ class RestrictedBoltzmannMachine():
 
                 reconstructed_input[batch*self.batch_size:self.batch_size +
                                     batch*self.batch_size][:] = vk[1]
+                reconstructed_hidden[batch*self.batch_size:self.batch_size +
+                                    batch*self.batch_size][:] = hk[1]  
                 # print(hk_activation.shape)
 
             # [DONE TASK 4.1] update the parameters using function 'update_params'
@@ -133,7 +141,14 @@ class RestrictedBoltzmannMachine():
             if it % self.print_period == 0:
                 print ("iteration=%3d/%3d \t recon_loss=%4.4f" %
                        (it+1, n_iterations, loss))
-        return
+        # plt.figure('Digit Estimate')
+        # for i in range(9):
+        #     plt.subplot(3, 3, i+1)
+        #     first_im = vk[1][i][:]
+        #     first_im = first_im.reshape(28, 28)
+        #     plt.imshow(first_im)
+        # plt.show()
+        return reconstructed_hidden
     
 
     def update_params(self,v_0,h_0,v_k,h_k):
@@ -151,6 +166,9 @@ class RestrictedBoltzmannMachine():
         """
 
        # [DONE TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
+
+
+
         self.delta_bias_v = np.sum(self.learning_rate*(v_0[1]-v_k[1]), axis=0)
         self.delta_weight_vh = self.learning_rate * \
             (np.dot(np.transpose(v_0[1]), h_0[0]) -
@@ -215,8 +233,13 @@ class RestrictedBoltzmannMachine():
 
             # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass below). \
             # Note that this section can also be postponed until TASK 4.2, since in this task, stand-alone RBMs do not contain labels in visible layer.
+            support = self.bias_v + np.dot(hidden_minibatch, np.transpose(self.weight_vh))
+
+            prob_hidden = sigmoid(support[:, :-self.n_labels])
+            prob_lbl = softmax(support[:, -self.n_labels:])
             
-            pass
+            activations = np.hstack((sample_binary(prob_hidden), sample_categorical(prob_lbl)))
+            on_prob = np.hstack((prob_hidden, prob_lbl))
             
         else:
                         
@@ -255,9 +278,10 @@ class RestrictedBoltzmannMachine():
 
         n_samples = visible_minibatch.shape[0]
 
-        # [TODO TASK 4.2] perform same computation as the function 'get_h_given_v' but with directed connections (replace the zeros below) 
-        
-        return np.zeros((n_samples,self.ndim_hidden)), np.zeros((n_samples,self.ndim_hidden))
+        on_prob = sigmoid(self.bias_h + np.dot(visible_minibatch, self.weight_v_to_h))
+        activations = sample_binary(on_prob)
+
+        return (on_prob, activations)
 
 
     def get_v_given_h_dir(self,hidden_minibatch):
@@ -290,8 +314,8 @@ class RestrictedBoltzmannMachine():
             # [TODO TASK 4.2] Note that even though this function performs same computation as 'get_v_given_h' but with directed connections,
             # this case should never be executed : when the RBM is a part of a DBN and is at the top, it will have not have directed connections.
             # Appropriate code here is to raise an error (replace pass below)
-            
-            pass
+            raise 'We should not be here! line: 316 (ish)'
+
             
         else:
                         
