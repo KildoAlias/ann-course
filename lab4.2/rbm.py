@@ -321,9 +321,11 @@ class RestrictedBoltzmannMachine():
                         
             # [TODO TASK 4.2] performs same computaton as the function 'get_v_given_h' but with directed connections (replace the pass and zeros below)             
 
-            pass
-            
-        return np.zeros((n_samples,self.ndim_visible)), np.zeros((n_samples,self.ndim_visible))        
+            on_prob = sigmoid(
+                self.bias_v + np.dot(hidden_minibatch, np.transpose(self.weight_v_to_h)))
+            activations = sample_binary(on_prob)
+
+        return (on_prob, activations)    
         
     def update_generate_params(self,inps,trgs,preds):
         

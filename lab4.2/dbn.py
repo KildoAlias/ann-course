@@ -60,12 +60,7 @@ class DeepBeliefNet():
           true_imgs: visible data shaped (number of samples, size of visible layer)
           true_lbl: true labels shaped (number of samples, size of label layer). Used only for calculating accuracy, not driving the net
         """
-        
-        n_samples = true_img.shape[0]
-        
-        vis = true_img # visible layer gets the image data
-        
-        lbl = np.ones(true_lbl.shape)/10. # start the net by telling you know nothing about labels        
+               
         
         # [TODO TASK 4.2] fix the image data in the visible layer and drive the network bottom to top. In the top RBM, run alternating Gibbs sampling \
         # and read out the labels (replace pass below and 'predicted_lbl' to your predicted labels).
@@ -76,7 +71,7 @@ class DeepBeliefNet():
         
         vis = true_img  # visible layer gets the image data
         
-        lbl = np.ones(true_lbl.shape)/10.  # start the net by telling you know nothing about labels
+        lbl = np.ones(true_lbl.shape)*0.1  # start the net by telling you know nothing about labels
 
         print("vis--hid")
         hidOut = self.rbm_stack['vis--hid'].get_h_given_v_dir(vis)[1]
@@ -106,6 +101,7 @@ class DeepBeliefNet():
         """
         
         n_sample = true_lbl.shape[0]
+        n_labels = true_lbl.shape[1]
         
         records = []        
         fig,ax = plt.subplots(1,1,figsize=(3,3))
@@ -113,14 +109,21 @@ class DeepBeliefNet():
         ax.set_xticks([]); ax.set_yticks([])
 
         lbl = true_lbl
-
         # [TODO TASK 4.2] fix the label in the label layer and run alternating Gibbs sampling in the top RBM. From the top RBM, drive the network \ 
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
-            
-        for _ in range(self.n_gibbs_gener):
+        image = np.random.choice(a=(0,1), size=(n_sample,self.sizes["vis"]))
+        image = self.rbm_stack["vis--hid"].get_h_given_v_dir(image)[1]
+        image = self.rbm_stack["hid--pen"].get_h_given_v_dir(image)[1]
+        image = np.hstack((image,lbl))
 
-            vis = np.random.rand(n_sample,self.sizes["vis"])
-            
+        for _ in range(self.n_gibbs_gener):
+            top_lbl = self.rbm_stack["pen+lbl--top"].get_h_given_v(image)[1]
+            pen_lbl = self.rbm_stack["pen+lbl--top"].get_v_given_h(top_lbl)[1]
+            image[:, :-n_labels] = pen_lbl[:, :-n_labels]
+            pen = pen_lbl[:, :-n_labels]
+            hid = self.rbm_stack["hid--pen"].get_v_given_h_dir(pen)[1]
+            vis = self.rbm_stack["vis--hid"].get_v_given_h_dir(hid)[1]
+           
             records.append( [ ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True, interpolation=None) ] )
             
         anim = stitch_video(fig,records).save("%s.generate%d.gif"%(name,np.argmax(true_lbl)))            
@@ -158,7 +161,7 @@ class DeepBeliefNet():
             """ 
             CD-1 training for vis--hid 
             """            
-            output = self.rbm_stack["vis--hid"].cd1(visible_trainset=vis_trainset, n_iterations=10)
+            output = self.rbm_stack["vis--hid"].cd1(visible_trainset=vis_trainset, n_iterations=20)
             self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
 
 
@@ -167,7 +170,7 @@ class DeepBeliefNet():
             CD-1 training for hid--pen 
             """            
             self.rbm_stack["vis--hid"].untwine_weights()  
-            output = self.rbm_stack["hid--pen"].cd1(visible_trainset=output, n_iterations=10)          
+            output = self.rbm_stack["hid--pen"].cd1(visible_trainset=output, n_iterations=20)          
             self.savetofile_rbm(loc="trained_rbm",name="hid--pen")            
 
 
@@ -178,7 +181,7 @@ class DeepBeliefNet():
             """
             output = np.hstack((output, lbl_trainset))
             self.rbm_stack["hid--pen"].untwine_weights()
-            output = self.rbm_stack["pen+lbl--top"].cd1(visible_trainset=output, n_iterations=10)  
+            output = self.rbm_stack["pen+lbl--top"].cd1(visible_trainset=output, n_iterations=20)  
             self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")           
 
         return    
