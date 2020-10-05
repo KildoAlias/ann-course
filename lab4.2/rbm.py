@@ -51,7 +51,7 @@ class RestrictedBoltzmannMachine():
         
         self.weight_h_to_v = None
 
-        self.learning_rate = 1/batch_size
+        self.learning_rate = 0.01
         
         self.momentum = 0.7
 
@@ -141,13 +141,13 @@ class RestrictedBoltzmannMachine():
             if it % self.print_period == 0:
                 print ("iteration=%3d/%3d \t recon_loss=%4.4f" %
                        (it+1, n_iterations, loss))
-        # plt.figure('Digit Estimate')
-        # for i in range(9):
-        #     plt.subplot(3, 3, i+1)
-        #     first_im = vk[1][i][:]
-        #     first_im = first_im.reshape(28, 28)
-        #     plt.imshow(first_im)
-        # plt.show()
+        plt.figure('Digit Estimate')
+        for i in range(9):
+            plt.subplot(3, 3, i+1)
+            first_im = vk[1][i][:]
+            first_im = first_im.reshape(28, 28)
+            plt.imshow(first_im)
+        plt.show()
         return reconstructed_hidden
     
 
