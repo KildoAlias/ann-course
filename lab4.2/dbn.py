@@ -5,7 +5,6 @@ class DeepBeliefNet():
 
     ''' 
     For more details : Hinton, Osindero, Teh (2006). A fast learning algorithm for deep belief nets. https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
-
     network          : [top] <---> [pen] ---> [hid] ---> [vis] 
                                `-> [lbl] 
     lbl : label
@@ -55,7 +54,6 @@ class DeepBeliefNet():
     def recognize(self,true_img,true_lbl):
 
         """Recognize/Classify the data into label categories and calculate the accuracy
-
         Args:
           true_imgs: visible data shaped (number of samples, size of visible layer)
           true_lbl: true labels shaped (number of samples, size of label layer). Used only for calculating accuracy, not driving the net
@@ -78,7 +76,7 @@ class DeepBeliefNet():
 
         print("hid--pen")
         penOut = self.rbm_stack['hid--pen'].get_h_given_v_dir(hidOut)[1]
-        penLblIn = np.concatenate((penOut, lbl), axis=1)
+        penLblIn = np.hstack((penOut, lbl))
         
         for _ in range(self.n_gibbs_recog):
             print("pen+lbl--top")
@@ -94,7 +92,6 @@ class DeepBeliefNet():
     def generate(self,true_lbl,name):
         
         """Generate data from labels
-
         Args:
           true_lbl: true labels shaped (number of samples, size of label layer)
           name: string used for saving a video of generated visible activations
@@ -136,7 +133,6 @@ class DeepBeliefNet():
         Greedy layer-wise training by stacking RBMs. This method first tries to load previous saved parameters of the entire RBM stack. 
         If not found, learns layer-by-layer (which needs to be completed) .
         Notice that once you stack more layers on top of a RBM, the weights are permanently untwined.
-
         Args:
           vis_trainset: visible data shaped (size of training set, size of visible layer)
           lbl_trainset: label data shaped (size of training set, size of label layer)
@@ -191,7 +187,6 @@ class DeepBeliefNet():
         """
         Wake-sleep method for learning all the parameters of network. 
         First tries to load previous saved parameters of the entire network.
-
         Args:
           vis_trainset: visible data shaped (size of training set, size of visible layer)
           lbl_trainset: label data shaped (size of training set, size of label layer)
