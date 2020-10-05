@@ -158,7 +158,7 @@ class DeepBeliefNet():
             """ 
             CD-1 training for vis--hid 
             """            
-            output = self.rbm_stack["vis--hid"].cd1(visible_trainset=vis_trainset, n_iterations=10)
+            output = self.rbm_stack["vis--hid"].cd1(visible_trainset=vis_trainset, n_iterations=20)
             self.savetofile_rbm(loc="trained_rbm",name="vis--hid")
 
 
@@ -167,7 +167,7 @@ class DeepBeliefNet():
             CD-1 training for hid--pen 
             """            
             self.rbm_stack["vis--hid"].untwine_weights()  
-            output = self.rbm_stack["hid--pen"].cd1(visible_trainset=output, n_iterations=10)          
+            output = self.rbm_stack["hid--pen"].cd1(visible_trainset=output, n_iterations=20)          
             self.savetofile_rbm(loc="trained_rbm",name="hid--pen")            
 
 
@@ -178,7 +178,7 @@ class DeepBeliefNet():
             """
             output = np.hstack((output, lbl_trainset))
             self.rbm_stack["hid--pen"].untwine_weights()
-            output = self.rbm_stack["pen+lbl--top"].cd1(visible_trainset=output, n_iterations=10)  
+            output = self.rbm_stack["pen+lbl--top"].cd1(visible_trainset=output, n_iterations=20)  
             self.savetofile_rbm(loc="trained_rbm",name="pen+lbl--top")           
 
         return    
