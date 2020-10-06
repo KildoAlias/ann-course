@@ -51,7 +51,7 @@ class RestrictedBoltzmannMachine():
         
         self.weight_h_to_v = None
 
-        self.learning_rate = 0.1
+        self.learning_rate = 0.05
         
         self.momentum = 0.7
 
